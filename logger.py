@@ -24,11 +24,6 @@ try:
 except:
   pass
 
-try:
-  import tensorflow as tf
-except:
-  pass
-
 
 __VER__ = '8.0.0.1'
 
@@ -244,6 +239,55 @@ class Logger(object):
       return self._logger(str_msg, show=True, results=results, show_time=show_time,
                           noprefix=noprefix)
     return
+  
+  
+  def Pmd(self, s=''):
+    print_func = None
+    try:
+      from IPython.display import Markdown, display
+      def print_func(s):
+        display(Markdown(s))
+    except:
+      pass      
+    if type(s) != str:
+      s = str(s)
+    
+    if print_func is not None:
+      self._add_log(
+          logstr=s,
+          show=False,
+          results=False, 
+          noprefix=False, 
+          show_time=False,
+          )
+      print_func(s)
+    else:
+      self.P(s)
+    return
+
+  def Pmdc(self, s=''):
+    print_func = None
+    try:
+      from IPython.display import Markdown, display
+      def print_func(s):
+        display(Markdown(s))
+    except:
+      pass      
+    if type(s) != str:
+      s = str(s)
+    
+    if print_func is not None:
+      self._add_log(
+          logstr=s,
+          show=False,
+          results=False, 
+          noprefix=False, 
+          show_time=False,
+          )
+      self.print_func('<strong>' + s + '</strong>')
+    else:
+      self.P(s)
+    return  
 
   def print_pad(self, str_msg, str_text, n=3):
     if type(str_msg) != str:
@@ -1634,6 +1678,56 @@ class Logger(object):
     else:
       self.P("  File not found!")
     return data
+
+
+  def save_np(self, fn, arr_or_arrs, folder='data', use_prefix=True, verbose=True):
+    if folder == 'data':
+      lfld = self._data_dir
+    elif folder == 'output':
+      lfld = self._outp_dir
+    elif folder == 'models':
+      lfld = self._modl_dir
+    else:
+      raise ValueError("Uknown save folder '{}' - valid options are `data`, `output`, `models`".format(
+        folder))
+    if use_prefix:
+      fn = self.file_prefix + '_' + fn
+    datafile = os.path.join(lfld, fn)
+    if type(arr_or_arrs) == list:
+      np.savez(datafile, arr_or_arrs)
+    elif type(arr_or_arrs) == np.ndarray:
+      np.save(datafile, arr_or_arrs)
+    else:
+      raise ValueError("Unknown `arr_or_arrs` - must provide either list of ndarrays or a single ndarray")
+    if verbose:
+      self.P("Saved sparse numpy data '{}' in '{}' folder".format(
+        fn, folder))
+    return
+
+
+
+  def load_np(self, fn, folder='data'):
+    """
+     `folder`: 'data', 'output', 'models'
+    """
+    if folder == 'data':
+      lfld = self._data_dir
+    elif folder == 'output':
+      lfld = self._outp_dir
+    elif folder == 'models':
+      lfld = self._modl_dir
+    else:
+      raise ValueError("Uknown load folder '{}' - valid options are data, output, models".format(
+        folder))
+    datafile = os.path.join(lfld, fn)
+    self.verbose_log("Loading numpy data '{}' from '{}'".format(fn, folder))
+    data = None
+    if os.path.isfile(datafile):
+      data = np.load(datafile)
+    else:
+      self.P("  File not found!")
+    return data
+
 
   def read_from_path(self, path):
     import pandas as pd
