@@ -7,7 +7,7 @@ Created on Thu Jul 25 09:17:02 2019
 
 import json
   
-__VER__ = '0.2.0.2' 
+__VER__ = '0.2.0.3' 
 
 class LummetryObject:
   """
@@ -15,9 +15,9 @@ class LummetryObject:
   
   Instructions:
       
-    1. use `super(self).__init__(**kwargs)` at the end of child `__init__`
+    1. use `super().__init__(**kwargs)` at the end of child `__init__`
     2. define `startup(self)` method for the child class and call 
-       `super(self).startup()` at beginning of `startup()` method
+       `super().startup()` at beginning of `startup()` method
   
   """
   def __init__(self, log, DEBUG=False, show_prefixes=False,
