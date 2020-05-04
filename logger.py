@@ -19,13 +19,8 @@ from collections import OrderedDict
 from datetime import datetime as dt, timedelta
 from io import BytesIO, TextIOWrapper
 
-try:
-  import cv2
-except:
-  pass
 
-
-__VER__ = '8.0.0.1'
+__VER__ = '1.0.0.3'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -639,6 +634,8 @@ class Logger(object):
     self.timer_level += 1
     return ctime
 
+  def stop_timer(self, sname, skip_first_timing = True):
+    return self.end_timer(sname, skip_first_timing)
 
   def end_timer(self, sname, skip_first_timing = True):
     result = 0
