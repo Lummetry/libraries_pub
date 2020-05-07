@@ -20,7 +20,13 @@ from datetime import datetime as dt, timedelta
 from io import BytesIO, TextIOWrapper
 
 
-__VER__ = '1.0.0.3'
+try: 
+  import tensorflow as tf
+except:
+  pass
+
+
+__VER__ = '1.0.1.0'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -1781,6 +1787,58 @@ class Logger(object):
   ################################################################
   ################################################################
 
+
+  ############################################################
+  ############################################################
+  ############################################################
+  # <<<<<<<<<<<<<<<<<<<< START 8. TFKeras <<<<<<<<<<<<<<<<<<<<
+  ##################################################################
+  ##################################################################
+  ##################################################################
+
+
+
+  ##########################################################
+  ##########################################################
+  ##########################################################
+  # >>>>>>>>>>>>>>>>>>>> END 8. TFKeras >>>>>>>>>>>>>>>>>>>>
+  ##########################################################
+  ##########################################################
+  ##########################################################
+
+  def load_tf_graph(self, pb_file):
+    
+    self.verbose_log("Prep graph from [...{}]...".format(pb_file[-30:]))
+    detection_graph = None
+    if os.path.isfile(pb_file):
+
+      start_time = tm()
+      detection_graph = tf.Graph()
+      with detection_graph.as_default():
+        od_graph_def = tf.GraphDef()
+        with tf.gfile.GFile(pb_file, 'rb') as fid:
+          serialized_graph = fid.read()
+          od_graph_def.ParseFromString(serialized_graph)
+          tf.import_graph_def(od_graph_def, name='')
+      end_time = tm()
+      self.verbose_log("Done preparing graph in {:.2f}s.".format(end_time - start_time))
+    else:
+      self.verbose_log(" FILE NOT FOUND [...{}]...".format(pb_file[-30:]))
+    return detection_graph
+
+
+  def load_graph_from_models(self, model_name, get_input_output=False):
+    if model_name[-3:] != '.pb':
+      model_name += '.pb'
+    graph_file = os.path.join(self.get_models_folder(), model_name)
+    tf_graph = self.load_tf_graph(graph_file)
+    if get_input_output:
+      cfg = self.load_models_json(graph_file + '.txt')
+      s_input = cfg['INPUT_0']
+      s_output = cfg['OUTPUT_0']
+      return tf_graph, s_input, s_output
+    else:
+      return tf_graph
 
 
   ##################################################################
