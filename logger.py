@@ -24,7 +24,7 @@ except:
   pass
 
 
-__VER__ = '1.0.1.1'
+__VER__ = '1.0.1.2'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -375,7 +375,10 @@ class Logger(object):
       base_folder = self._get_cloud_base_folder(base_folder)
       self._base_folder  = os.path.join(base_folder,app_folder)
       if not os.path.isdir(self._base_folder):
-        raise ValueError("Invalid app base folder '{}'!".format(self._base_folder))
+        try:
+          os.mkdir(self._base_folder)
+        except:
+          raise ValueError("Invalid app base folder '{}'!".format(self._base_folder))
       print("Loaded config [{}]  BASE: {}".format(
           config_file,self._base_folder), flush = True)
       self.config_file = config_file
