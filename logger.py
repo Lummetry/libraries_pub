@@ -6,14 +6,12 @@ import shutil
 import socket
 import codecs
 import pickle
-import base64
 import asyncio
 import textwrap
 import itertools
 import numpy as np
 
 from functools import wraps
-from shutil import copyfile
 from time import time as tm
 from collections import OrderedDict
 from datetime import datetime as dt, timedelta
@@ -21,12 +19,12 @@ from io import BytesIO, TextIOWrapper
 
 
 try: 
-  import tensorflow as tf
+  import tensorflow.compat.v1 as tf1
 except:
   pass
 
 
-__VER__ = '1.0.1.0'
+__VER__ = '1.0.1.1'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -1813,13 +1811,13 @@ class Logger(object):
     if os.path.isfile(pb_file):
 
       start_time = tm()
-      detection_graph = tf.Graph()
+      detection_graph = tf1.Graph()
       with detection_graph.as_default():
-        od_graph_def = tf.GraphDef()
-        with tf.gfile.GFile(pb_file, 'rb') as fid:
+        od_graph_def = tf1.GraphDef()
+        with tf1.io.gfile.GFile(pb_file, 'rb') as fid:
           serialized_graph = fid.read()
           od_graph_def.ParseFromString(serialized_graph)
-          tf.import_graph_def(od_graph_def, name='')
+          tf1.import_graph_def(od_graph_def, name='')
       end_time = tm()
       self.verbose_log("Done preparing graph in {:.2f}s.".format(end_time - start_time))
     else:
