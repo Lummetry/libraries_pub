@@ -1840,6 +1840,26 @@ class Logger(object):
       return tf_graph, s_input, s_output
     else:
       return tf_graph
+    
+  def combine_graphs_tf1(self, lst_graphs, lst_names):
+    """
+    will return a graph that combines all given graphs
+    individual tensors of graph `i` in `lst_graphs` can be accessed via
+    `lst_names[i] + '/TENSOR_NAME'.
+    """
+
+    assert len(lst_graphs) == len(lst_names)
+    gdefs = []
+    for graph in lst_graphs:
+      gdefs.append(graph.as_graph_def())
+    full_graph = tf1.Graph()
+    self.P("Creating one graph out of {} graphs: {}".format(len(lst_graphs), lst_names))
+    with full_graph.as_default():
+      for gdef, gname in zip(gdefs, lst_names):
+        self.P("  Adding {}".format(gname))
+        tf1.import_graph_def(graph_def=gdef, name=gname)
+    return full_graph
+    
 
 
   ##################################################################
