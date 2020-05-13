@@ -24,7 +24,7 @@ except:
   pass
 
 
-__VER__ = '1.0.2.2'
+__VER__ = '1.0.2.3'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -66,7 +66,7 @@ class Logger(object):
                show_time=True,
                config_file_encoding=None,
                no_folders_no_save=False,
-               max_lines=1000,
+               max_lines=None,
                HTML=False,
                DEBUG=True,
                data_folder_additional_configs=None,
@@ -206,7 +206,10 @@ class Logger(object):
     return
   
   def _check_log_size(self):
-    if self.HTML and (len(self.app_log) >= self.max_lines):
+    if self.max_lines is None:
+      return
+
+    if len(self.app_log) >= self.max_lines:
       self._add_log("Ending log part {}".format(self.split_part))
       self._save_log()
       self.app_log = []
