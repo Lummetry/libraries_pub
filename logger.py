@@ -24,7 +24,7 @@ except:
   pass
 
 
-__VER__ = '1.0.2.3'
+__VER__ = '1.0.3.0'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
