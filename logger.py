@@ -1260,15 +1260,30 @@ class Logger(object):
   ##############################################################
   ##############################################################
 
-  def load_dataframe(self, fn, timestamps=None):
+  def load_dataframe(self, fn, timestamps=None, folder='data'):
     """
     if fn ends in ".zip" then the loading will also uncompress in-memory
     """
     import pandas as pd
 
-    ext = os.path.splitext(fn)[-1]
-    file_path = os.path.join(self._data_dir, fn)
-    self.P("Loading '{}'...".format(file_path))
+    assert folder in [None, 'data', 'output', 'models']
+    if folder == 'data':
+      lfld = self._data_dir
+    elif folder == 'output':
+      lfld = self._outp_dir
+    elif folder == 'models':
+      lfld = self._modl_dir
+
+    if folder is not None:
+      datafile = os.path.join(lfld, fn)
+      self.verbose_log("Loading CSV '{}' from '{}'".format(fn, folder))
+    else:
+      datafile = fn
+      self.verbose_log("Loading CSV '{}'".format(fn))
+      
+    ext = os.path.splitext(datafile)[-1]
+    file_path = datafile
+    self.P("Loading datframe '{}'...".format(datafile))
     if ext.lower() == '.zip':
       df = pd.read_pickle(file_path)
     else:
@@ -1320,21 +1335,31 @@ class Logger(object):
         df = pd.read_csv(file_path)
     return df
 
-  def save_dataframe(self, df, fn='', show_prefix=False, to_data=True,
+  def save_dataframe(self, df, fn='', show_prefix=False, 
+                     folder='data',
                      ignore_index=True, compress=False,
-                     full_path=False, mode='w', header=True):
+                     mode='w', header=True,
+                     to_data=None,
+                     full_path=None,
+                     ):
     """
      df: dataframe
      fn: name of file
+     folder: None - absolute path, 'data' - save to data ... etc
      show_prefix: add timestamp prefix
-     to_data: False to save in output dir instead of data dir
+     (obsolete) to_data: False to save in output dir instead of data dir
      compress: save to zipped pickle
-     full_path : if full path is specified then file is saved to fn ignoring anything else
+     (obsolete) full_path : if full path is specified then file is saved to fn ignoring anything else
      mode: the writing mode in csv (default 'w' - write). Could be also 'a' - append
      header: bool or list of str, default True
         Write out the column names. If a list of strings is given it is assumed to be aliases for the column names.
         This may be set to False for 'append' mode, for all but not the first save call.
     """
+    if to_data is not None:
+      self.P("WARNING: `to_data` is obsolete, please use `folder='data'`")
+    if full_path is not None:
+      self.P("WARNING: `full_path` is obsolete, please use `folder=None`")
+      
     if compress:
       ext = '.zip'
     else:
@@ -1342,10 +1367,21 @@ class Logger(object):
 
     if fn[-4:] != ext:
       fn += ext
+      
+    assert folder in [None, 'data', 'output', 'models']
+    if folder == 'data' or to_data:
+      lfld = self._data_dir
+    elif folder == 'output':
+      lfld = self._outp_dir
+    elif folder == 'models':
+      lfld = self._modl_dir
+    elif folder is None:
+      lfld = None
+      
 
-    if not full_path:
+    if lfld is not None:
       file_prefix = '' if not show_prefix else self.file_prefix + "_"
-      save_path = self._data_dir if to_data else self._outp_dir
+      save_path = lfld 
       file_name = file_prefix + fn
       out_file = os.path.join(save_path, file_name)
     else:
