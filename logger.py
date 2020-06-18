@@ -1009,24 +1009,33 @@ class Logger(object):
     this method resets for:
         numpy, random, tensorflow, torch
     """
+    _np, _rn, _tf, _tc = None, None, None, None
 
-    _np = self.package_loader('numpy', return_package=True)
-    _rn = self.package_loader('random', return_package=True)
-    _tf = self.package_loader('tensorflow', return_package=True)
-    _tc = self.package_loader('torch', return_package=True)
-    if _np is not None and 'np' in packages:
+    if 'np' in packages:
+      _np = self.package_loader('numpy', return_package=True)
+    
+    if 'rn' in packages:
+      _rn = self.package_loader('random', return_package=True)
+    
+    if 'tf' in packages:
+      _tf = self.package_loader('tensorflow', return_package=True)
+    
+    if 'tc' in packages:
+      _tc = self.package_loader('torch', return_package=True)
+    
+    if _np is not None:
       self.P("Setting random seed {} for 'Numpy'".format(seed))
       _np.random.seed(seed)
-    if _rn is not None and 'rn' in packages:
+    if _rn is not None:
       self.P("Setting random seed {} for 'random'".format(seed))
       _rn.seed(seed)
-    if _tf is not None and 'tf' in packages:
+    if _tf is not None:
       self.P("Setting random seed {} for 'tensorflow'".format(seed))
       if _tf.__version__[0] == '2':
         _tf.random.set_seed(seed)
       else:
         _tf.set_random_seed(seed)
-    if _tc is not None and 'tc' in packages:
+    if _tc is not None:
       self.P("Setting random seed {} for 'torch'".format(seed))
       _tc.manual_seed(seed)
     return
