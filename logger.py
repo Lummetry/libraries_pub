@@ -107,7 +107,7 @@ class Logger(object):
     
     ver = "v.{}".format(lib_ver) if lib_ver != "" else ""
     self.verbose_log("Library [{} {}] initialized on machine [{}]".format(
-                      self.__lib__, ver, self.MACHINE_NAME))
+                      self.__lib__, ver, self.MACHINE_NAME), color='green')
     if self.is_running_from_ipython:
       self.verbose_log('  Script running in ipython.')
     if self.is_running_in_debugger:
@@ -125,7 +125,7 @@ class Logger(object):
   ###############################################################
   ###############################################################
   ###############################################################
-  def _logger(self, logstr, show=True, results=False, noprefix=False, show_time=False):
+  def _logger(self, logstr, show=True, results=False, noprefix=False, show_time=False, color=None):
     """
     log processing method
     """
@@ -133,7 +133,8 @@ class Logger(object):
 
     self._add_log(logstr, show=show, results=results,
                   noprefix=noprefix,
-                  show_time=show_time)
+                  show_time=show_time,
+                  color=color)
 
     self._save_log()
 
@@ -143,11 +144,15 @@ class Logger(object):
     return elapsed
   
   
-  def _add_log(self, logstr, show=True, results=False, noprefix=False, show_time=False):
+  def _add_log(self, logstr, show=True, results=False, noprefix=False, show_time=False, color=None):
     if type(logstr) != str:
       logstr = str(logstr)
     if logstr == "":
       logstr = " "
+    if 'WARNING' in logstr and color is None:
+      color = 'warning'
+    if 'ERROR' in logstr and color is None:
+      color = 'error'
     elapsed = tm() - self.last_time
     nowtime = dt.now()
     prefix = ""
@@ -163,6 +168,29 @@ class Logger(object):
       logstr += " [{:.2f}s]".format(elapsed)
     self.app_log.append(logstr)
     if show:
+      if color is not None:
+        COLORS = {
+          'red' : "\x1b[1;31m",
+          'green' : "\x1b[1;32m",
+          'yellow' : "\x1b[1;33m",
+          'blue' : "\x1b[1;34m",
+          'alarm' : "\x1b[41m",
+          'error' : "\x1b[41m",
+          'warning' : "\x1b[1;31m",
+          }
+        
+        _color_end = "\x1b[0m"
+        clr = COLORS.get(color, None)
+        _color_start = clr
+        if clr is None:
+          print("ERROR: unknown color '{}' - available colors are:".format(color))
+          for k,v in COLORS.items():
+            print(v + k + _color_end)
+          raise ValueError("Invalid color '{}'".format(color))
+        else:
+          logstr = _color_start + logstr + _color_end
+          
+          
       print("\r" + logstr, flush = True)
       self.printed.append(True)
     else:
@@ -170,8 +198,7 @@ class Logger(object):
     if results:
       self.results.append(res_log)
       self.save_results()
-    return
-  
+    return  
   
   def _save_log(self, DEBUG_ERRORS=False):
     if self.no_folders_no_save:
@@ -220,11 +247,15 @@ class Logger(object):
     return
   
   
-  def verbose_log(self, str_msg, results=False, show_time=False, noprefix=False):
+  def verbose_log(self, str_msg, results=False, show_time=False, noprefix=False, color=None):
     return self._logger(str_msg, show=True, results=results, show_time=show_time,
-                        noprefix=noprefix)
-  def P(self,str_msg, results=False, show_time=False, noprefix=False):
-    return self.p(str_msg, results, show_time, noprefix)
+                        noprefix=noprefix, color=color)
+  
+  
+  def P(self,str_msg, results=False, show_time=False, noprefix=False, color=None):
+    return self.p(str_msg, results, show_time, noprefix, color=color)
+
+    
 
   def Pr(self,str_msg, results=False, show_time=False, noprefix=False):
     if type(str_msg) != str:
@@ -232,14 +263,14 @@ class Logger(object):
     print("\r" + str_msg, flush=True, end='')
 
   
-  def p(self,str_msg, results=False, show_time=False, noprefix=False):
+  def p(self,str_msg, results=False, show_time=False, noprefix=False, color=None):
     return self._logger(str_msg, show=True, results=results, show_time=show_time,
-                        noprefix=noprefix)
+                        noprefix=noprefix, color=color)
 
-  def iP(self,str_msg, results=False, show_time=False, noprefix=False):
+  def iP(self,str_msg, results=False, show_time=False, noprefix=False, color=None):
     if self.is_running_from_ipython:
       return self._logger(str_msg, show=True, results=results, show_time=show_time,
-                          noprefix=noprefix)
+                          noprefix=noprefix, color=color)
     return
   
   

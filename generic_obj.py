@@ -76,7 +76,7 @@ class LummetryObject:
     if hasattr(self,'version'):
       ver = 'v.' + self.version
       
-    self.P("{} {} startup.".format(self.__class__.__name__, ver))
+    self.P("{} {} startup.".format(self.__class__.__name__, ver), color='green')
     return
 
   def shutdown(self):
@@ -92,15 +92,15 @@ class LummetryObject:
     return
 
 
-  def P(self, s, t=False):    
+  def P(self, s, t=False, color=None):    
     if self.show_prefixes:
       _r = self.log.P("{}: {}".format(
-                self.__name__,s),show_time=t)
+                self.__name__,s),show_time=t, color=color)
     else:
       if self.prefix_log is None:
-        _r = self.log.P("{}".format(s),show_time=t)
+        _r = self.log.P("{}".format(s),show_time=t, color=color)
       else:
-        _r = self.log.P("{} {}".format(self.prefix_log, s), show_time=t)
+        _r = self.log.P("{} {}".format(self.prefix_log, s), show_time=t, color=color)
     return _r
         
   
@@ -109,12 +109,12 @@ class LummetryObject:
     if self.DEBUG:
       if self.show_prefixes:
         _r = self.log.P("[DEBUG] {}: {}".format(
-                        self.__name__,s),show_time=t)
+                        self.__name__,s),show_time=t, color='yellow')
       else:
         if self.prefix_log is None:
-          _r = self.log.P("[D] {}".format(s),show_time=t)      
+          _r = self.log.P("[D] {}".format(s),show_time=t, color='yellow')      
         else:
-          _r = self.log.P("[D]{} {}".format(self.prefix_log, s), show_time=t)
+          _r = self.log.P("[D]{} {}".format(self.prefix_log, s), show_time=t, color='yellow')
     return _r
   
   
