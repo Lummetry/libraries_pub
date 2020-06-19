@@ -1161,16 +1161,21 @@ class Logger(object):
     return
 
   def save_plot(self, plt, label='', include_prefix=True, just_label=False,
-                full_path=None):
+                full_path=None, return_short_name=False):
     """
     saves current figure to file
     """
-    _, short_file = self.output_pyplot_image(plt=plt,
-                                             label=label,
-                                             include_prefix=include_prefix,
-                                             just_label=just_label,
-                                             full_path=full_path)
-    return short_file
+    long_path, short_file = self.output_pyplot_image(
+      plt=plt,
+      label=label,
+      include_prefix=include_prefix,
+      just_label=just_label,
+      full_path=full_path
+      )
+    if return_short_name:
+      return short_file
+    else:
+      return long_path
 
   def output_pyplot_image(self, plt, label='', include_prefix=True,
                           use_single_prefix=True,
