@@ -273,6 +273,35 @@ class Logger(object):
                           noprefix=noprefix, color=color)
     return
   
+  def print_on_columns(self, *objects, nr_print_columns=4, nr_print_chars=12,
+                       header=None):
+    if header:  
+      self.P(header)
+      
+    nr_labels_per_column = int(np.ceil(len(objects) / nr_print_columns))
+    print_columns = [[] for _ in range(nr_print_columns)]
+    
+    crt_column = 0
+    _fmt = "{:>" + str(nr_print_chars) + "}"    
+  
+    for i,obj in enumerate(objects):
+      if i // nr_labels_per_column != crt_column:
+        crt_column += 1
+      
+      print_columns[crt_column].append(_fmt.format(obj[:nr_print_chars]))
+    #endfor
+    
+    for i in range(nr_labels_per_column):
+      str_line = ''
+      for j in range(nr_print_columns):
+        if i >= len(print_columns[j]):
+          continue
+        
+        str_line += print_columns[j][i] + '    '
+      
+      self.P(str_line, noprefix=True)
+    #endfor
+    return   
   
   def Pmd(self, s=''):
     print_func = None
@@ -1002,14 +1031,14 @@ class Logger(object):
       self.P("    X: " + ''.join([x for x in _x]))
     return res
 
-  def reset_seeds(self, seed=123, packages=['np', 'rn', 'tf', 'tc']):
+  def reset_seeds(self, seed=123, packages=['np', 'rn', 'tf', 'th']):
     """
     this method resets all possible random seeds in order to ensure
     reproducible results
     this method resets for:
         numpy, random, tensorflow, torch
     """
-    _np, _rn, _tf, _tc = None, None, None, None
+    _np, _rn, _tf, _th = None, None, None, None
 
     if 'np' in packages:
       _np = self.package_loader('numpy', return_package=True)
@@ -1018,26 +1047,31 @@ class Logger(object):
       _rn = self.package_loader('random', return_package=True)
     
     if 'tf' in packages:
-      _tf = self.package_loader('tensorflow', return_package=True)
+      if 'tensorflow' in sys.modules:
+        _tf = self.package_loader('tensorflow', return_package=True)
     
-    if 'tc' in packages:
-      _tc = self.package_loader('torch', return_package=True)
+    if 'th' in packages:
+      if 'torch' in sys.modules:
+        _th = self.package_loader('torch', return_package=True)
     
     if _np is not None:
       self.P("Setting random seed {} for 'Numpy'".format(seed))
       _np.random.seed(seed)
+      
     if _rn is not None:
       self.P("Setting random seed {} for 'random'".format(seed))
       _rn.seed(seed)
+      
     if _tf is not None:
       self.P("Setting random seed {} for 'tensorflow'".format(seed))
       if _tf.__version__[0] == '2':
         _tf.random.set_seed(seed)
       else:
         _tf.set_random_seed(seed)
-    if _tc is not None:
+        
+    if _th is not None:
       self.P("Setting random seed {} for 'torch'".format(seed))
-      _tc.manual_seed(seed)
+      _th.manual_seed(seed)
     return
 
   def plot_confusion_matrix(self, cm, classes=["0", "1"],
