@@ -1,6 +1,7 @@
 import os
 import sys
 import bz2
+import base64
 import json
 import shutil
 import socket
@@ -18,7 +19,7 @@ from datetime import datetime as dt, timedelta
 from io import BytesIO, TextIOWrapper
 
 
-
+__deployment__ = 'pub'
 
 __VER__ = '1.0.3.0'
 
@@ -1904,6 +1905,51 @@ class Logger(object):
   ################################################################
 
 
+
+  ###################################################################
+  ###################################################################
+  ###################################################################
+  # <<<<<<<<<<<<<<<<<<<< START 6. ComputerVision <<<<<<<<<<<<<<<<<<<<
+  ###################################################################
+  ###################################################################
+  ###################################################################
+
+  @staticmethod
+  def is_image(file):
+    return any([file.endswith(tail) for tail in ('.png', '.jpg', '.jpeg')])
+  
+  
+  @staticmethod
+  def np_image_to_base64(np_image, ENCODING='utf-8'): 
+    import PIL
+    image = PIL.Image.fromarray(np_image)
+    buffered = BytesIO()
+    image.save(buffered, format="JPEG")
+    img_base64 = base64.b64encode(buffered.getvalue())  
+    img_str = img_base64.decode(ENCODING)
+    return img_str
+  
+  @staticmethod
+  def plt_to_base64(plt, close=True):
+    figfile = BytesIO()
+    plt.savefig(figfile, format='png')
+    figfile.seek(0)
+    base64_bytes = base64.b64encode(figfile.getvalue())
+    base64_string = base64_bytes.decode('utf-8')
+    if close:
+      plt.close()
+    return base64_string  
+
+  
+  
+  #################################################################
+  #################################################################
+  #################################################################
+  # >>>>>>>>>>>>>>>>>>>> END 6. ComputerVision >>>>>>>>>>>>>>>>>>>>
+  #################################################################
+  #################################################################
+  #################################################################  
+  
   ############################################################
   ############################################################
   ############################################################
