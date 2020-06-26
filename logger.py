@@ -18,10 +18,6 @@ from datetime import datetime as dt, timedelta
 from io import BytesIO, TextIOWrapper
 
 
-try: 
-  import tensorflow.compat.v1 as tf1
-except:
-  pass
 
 
 __VER__ = '1.0.3.0'
@@ -1928,7 +1924,11 @@ class Logger(object):
     return res
 
   def load_tf_graph(self, pb_file):
-    
+    try: 
+      import tensorflow.compat.v1 as tf1
+    except:
+      pass
+
     self.verbose_log("Prep graph from [...{}]...".format(pb_file[-30:]))
     detection_graph = None
     if os.path.isfile(pb_file):
@@ -1967,6 +1967,10 @@ class Logger(object):
     individual tensors of graph `i` in `lst_graphs` can be accessed via
     `lst_names[i] + '/TENSOR_NAME'.
     """
+    try: 
+      import tensorflow.compat.v1 as tf1
+    except:
+      pass
 
     assert len(lst_graphs) == len(lst_names)
     gdefs = []
