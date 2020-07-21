@@ -11,6 +11,7 @@ import asyncio
 import textwrap
 import itertools
 import numpy as np
+import traceback
 
 from functools import wraps
 from time import time as tm
@@ -21,7 +22,7 @@ from io import BytesIO, TextIOWrapper
 
 __deployment__ = 'pub'
 
-__VER__ = '1.0.3.0'
+__VER__ = '1.0.3.2'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -927,6 +928,32 @@ class Logger(object):
   
   def now_str(self):
     return dt.now().strftime("%Y%m%d%H%M%S%f")
+    
+  def get_error_info(self):
+    """
+    Returns error_type, file, method, line for last error if available
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    (tuple) str, str, str, str : errortype, file, method, line
+
+    """
+    err_type, err_val, err_trace = sys.exc_info()
+    self._last_extracted_error = err_type, err_val, err_trace
+    if err_type is not None:
+      str_err = err_type.__name__
+      stack_summary = traceback.extract_tb(err_trace)
+      last_error_frame = stack_summary[-1]
+      fn = os.path.splitext(os.path.split(last_error_frame.filename)[-1])[0]
+      lineno = last_error_frame.lineno
+      func_name = last_error_frame.name
+      return str_err, fn, func_name, lineno
+    else:
+      return "","","","",""    
 
   #############################################################
   #############################################################
