@@ -430,8 +430,7 @@ class Logger(object):
       assert ("BASE_FOLDER" in self.config_data.keys())
       assert ("APP_FOLDER" in self.config_data.keys())
       base_folder = self.config_data["BASE_FOLDER"]
-      if '~' in base_folder:
-        base_folder = base_folder.replace('~', os.path.expanduser("~"))
+      base_folder = self.expand_tilda(base_folder)
       app_folder = self.config_data["APP_FOLDER"]
       base_folder = self._get_cloud_base_folder(base_folder)
       self._base_folder  = os.path.join(base_folder,app_folder)
@@ -445,6 +444,7 @@ class Logger(object):
       self.config_file = config_file
     else:
       self.config_data = {}
+      self._base_folder = self.expand_tilda(self._base_folder)
       self._base_folder = self._get_cloud_base_folder(self._base_folder)
       self.config_data['BASE_FOLDER'] = self._base_folder
       self.config_data['APP_FOLDER'] = self._app_folder
