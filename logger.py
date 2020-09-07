@@ -2537,6 +2537,101 @@ class Logger(object):
       #endif
     return wrapped
 
+  @staticmethod
+  def dropbox_upload(access_token,
+                     file_path,
+                     target_path,
+                     timeout=900,
+                     chunk_size=4*1024*1024):
+    
+    """
+    Uploads in the folder specific to a dropbox application.
+    
+    Steps:
+      1. access https://www.dropbox.com/developers/apps
+      2. create your app
+      3. generate an unlimited access token
+    
+    Parameters
+    ----------
+    
+    access_token : str
+      The token generated in the dropbox app @ step 3
+    
+    file path : str
+      Path to the local file that needs to be uploaded in dropbox
+    
+    target_path : str
+      Path to the remote dropbox path. Very important! This should start
+      with '/' (e.g. '/DATA/file.txt')
+    
+    timeout : int, optional
+      Parameter that is passed to the dropbox.Dropbox constructor
+      The default is 900.
+    
+    chunk_size : int, optional
+      Specifies how many bytes are uploaded progressively. If it's None,
+      then the whole file is uploaded one time. Very important! If the
+      file is big enough and `chunk_size=None` then errors may occur.
+      The default is 4*1024*1024
+    
+    
+    Returns
+    -------
+      A downloadable link of the uploaded file
+    
+    """
+    
+    
+    import dropbox
+    from tqdm import tqdm
+    
+    dbx = dropbox.Dropbox(access_token, timeout=timeout)
+    
+    if chunk_size is None:
+      with open(file_path, 'rb') as f:
+        dbx.files_upload(f.read(), target_path)
+    else:
+      with open(file_path, "rb") as f:
+        file_size = os.path.getsize(file_path)
+        if file_size <= chunk_size:
+          print(dbx.files_upload(f.read(), target_path))
+        else:
+          with tqdm(total=file_size, desc="Uploaded") as pbar:
+            upload_session_start_result = dbx.files_upload_session_start(
+              f.read(chunk_size)
+            )
+            pbar.update(chunk_size)
+            cursor = dropbox.files.UploadSessionCursor(
+              session_id=upload_session_start_result.session_id,
+              offset=f.tell(),
+            )
+            commit = dropbox.files.CommitInfo(path=target_path)
+            while f.tell() < file_size:
+              if (file_size - f.tell()) <= chunk_size:
+                print(
+                  dbx.files_upload_session_finish(
+                    f.read(chunk_size), cursor, commit
+                  )
+                )
+              else:
+                dbx.files_upload_session_append(
+                  f.read(chunk_size),
+                  cursor.session_id,
+                  cursor.offset,
+                )
+                cursor.offset = f.tell()
+              #endif
+              pbar.update(chunk_size)
+            #end while
+          #end while tqdm
+        #endif
+      #endwith
+    #endif
+
+    return dbx.files_get_temporary_link(target_path).link
+  #enddef
+
   ################################################################
   ################################################################
   ################################################################
