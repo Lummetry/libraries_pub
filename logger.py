@@ -412,9 +412,13 @@ class Logger(object):
     return
   
   def _get_cloud_base_folder(self, base_folder):
-    if "GOOGLE" in base_folder.upper():
+    upper = base_folder.upper()
+    google = "GOOGLE" in upper
+    dropbox = "DROPBOX" in upper
+    
+    if google and not "/DATA/" in upper:
       base_folder = self.get_google_drive()
-    if "DROPBOX" in base_folder.upper():
+    if dropbox and not "/DATA/" in upper:
       base_folder = self.get_dropbox_drive()
     return base_folder
   
