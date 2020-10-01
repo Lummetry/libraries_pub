@@ -22,7 +22,7 @@ from io import BytesIO, TextIOWrapper
 
 __deployment__ = 'pub'
 
-__VER__ = '1.0.4.0'
+__VER__ = '1.0.4.1'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -2011,7 +2011,15 @@ class Logger(object):
     import pickle
     assert where in ['models', 'fullpath']
     
-    with open('libraries/model_helper.dat', 'rb') as fh:
+    PATH = 'libraries'    
+    info = sys.version_info
+    sver = '_{}{}{}'.format(info.major, info.minor, info.micro)  
+    fnh = os.path.join(PATH, 'model_helper'+sver+'.dat')
+    if not os.path.isfile(fnh):
+      fnhs = [x for x in os.listdir(PATH) if 'model_helper' in x]
+      raise ValueError('File {} not found. Avail files are: {}'.format(
+        fnh,fnhs))      
+    with open(fnh, 'rb') as fh:
       helper = pickle.load(fh)
     
     if name[-3:] == '.h5':
@@ -2051,7 +2059,15 @@ class Logger(object):
     assert where in ['models', 'fullpath']
     import tensorflow as tf
     
-    with open('libraries/model_helper.dat', 'rb') as fh:
+    PATH = 'libraries'    
+    info = sys.version_info
+    sver = '_{}{}{}'.format(info.major, info.minor, info.micro)  
+    fnh = os.path.join(PATH, 'model_helper'+sver+'.dat')
+    if not os.path.isfile(fnh):
+      fnhs = [x for x in os.listdir(PATH) if 'model_helper' in x]
+      raise ValueError('File {} not found. Avail files are: {}'.format(
+        fnh,fnhs))      
+    with open(fnh, 'rb') as fh:
       helper = pickle.load(fh)
 
     if where == 'models':
@@ -2069,6 +2085,7 @@ class Logger(object):
       )
     
     return helper
+
 
   
   def get_gpu(self):    
