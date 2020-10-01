@@ -22,7 +22,7 @@ from io import BytesIO, TextIOWrapper
 
 __deployment__ = 'pub'
 
-__VER__ = '1.0.3.2'
+__VER__ = '1.0.4.0'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -168,17 +168,17 @@ class Logger(object):
     if show:
       if color is not None:
         COLORS = {
-          'red' : "\x1b[1;31m",
-          'green' : "\x1b[1;32m",
-          'yellow' : "\x1b[1;33m",
-          'blue' : "\x1b[1;34m",
-          'alarm' : "\x1b[41m",
-          'error' : "\x1b[41m",
-          'warning' : "\x1b[1;31m",
+          'r' : "\x1b[1;31m",
+          'g' : "\x1b[1;32m",
+          'y' : "\x1b[1;33m",
+          'b' : "\x1b[1;34m",
+          'a' : "\x1b[41m",
+          'e' : "\x1b[41m",
+          'w' : "\x1b[1;31m",
           }
-        
+                
         _color_end = "\x1b[0m"
-        clr = COLORS.get(color, None)
+        clr = COLORS.get(color[0], None)
         _color_start = clr
         if clr is None:
           print("ERROR: unknown color '{}' - available colors are:".format(color))
@@ -1989,6 +1989,87 @@ class Logger(object):
   ##################################################################
   ##################################################################
   
+  def save_deploy_model(self, model, name, where='models'):
+    """
+    Saves a model for deployment
+
+    Parameters
+    ----------
+    model : tf model
+      the model object.
+    name : str 
+      name of the model or full path to the output file
+    where : str, optional
+      'models' if `name` is a simple name or `fullpath` if full path is provided. 
+      The default is 'models'.
+
+    Returns
+    -------
+    None.
+
+    """
+    import pickle
+    assert where in ['models', 'fullpath']
+    
+    with open('libraries/model_helper.dat', 'rb') as fh:
+      helper = pickle.load(fh)
+    
+    if name[-3:] == '.h5':
+      name = name[:-3]
+      
+    if where == 'models':
+      model_file = os.path.join(self.get_models_folder(), name)
+    else:
+      model_file = name
+      
+    model_file += '.dat'
+    
+    helper.save_for_serving(
+      log=self,
+      model=model,
+      deploy_model_path=model_file
+      )
+    return
+  
+  def load_deploy_model(self, name, where='models'):
+    """
+    Loads a deployed model in production
+
+    Parameters
+    ----------
+    name : str
+      name (if in 'models' folder) or full path to the model
+    where : str, optional
+      either 'models' or 'fullpath'. The default is 'models'.
+
+    Returns
+    -------
+    tf model
+
+    """
+    import pickle
+    assert where in ['models', 'fullpath']
+    import tensorflow as tf
+    
+    with open('libraries/model_helper.dat', 'rb') as fh:
+      helper = pickle.load(fh)
+
+    if where == 'models':
+      model_file = os.path.join(self.get_models_folder(), name)
+    else:
+      model_file = name
+      
+    if not os.path.isfile(model_file):
+      raise ValueError("Model data not found '{}'".format(model_file))
+    
+    helper.load_for_serving(
+      log=self,
+      deploy_model_path=model_file,
+      load_func=tf.keras.models.load_model,
+      )
+    
+    return helper
+
   
   def get_gpu(self):    
     res = []
