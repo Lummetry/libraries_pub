@@ -22,7 +22,7 @@ from io import BytesIO, TextIOWrapper
 
 __deployment__ = 'pub'
 
-__VER__ = '1.0.4.1'
+__VER__ = '1.0.4.2'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -1988,6 +1988,19 @@ class Logger(object):
   ##################################################################
   ##################################################################
   ##################################################################
+  
+  def load_code(self, obj, name, folder):
+    import pickle
+    info = sys.version_info
+    sver = '_{}{}{}'.format(info.major, info.minor, info.micro)  
+    assert not any(char.isdigit() for char in name), "name must not contain numbers - {}".format(name)
+    
+    fn = os.path.join(folder, name + sver +'.dat')
+    with open(fn, 'wb') as fh:
+      data = pickle.load(fh)
+    self.P("Loaded '{}'".format(fn))
+    return data
+  
   
   def save_deploy_model(self, model, name, where='models'):
     """
