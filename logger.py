@@ -22,7 +22,7 @@ from io import BytesIO, TextIOWrapper
 
 __deployment__ = 'pub'
 
-__VER__ = '1.0.4.2'
+__VER__ = '1.0.4.3'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -2002,6 +2002,23 @@ class Logger(object):
     return data
   
   
+  def _load_helper(self):
+    import pickle
+    PATH = 'libraries'    
+    info = sys.version_info
+    sver = '_{}{}{}'.format(info.major, info.minor, info.micro)  
+    fnh = os.path.join(PATH, 'model_helper'+sver+'.dat')
+    if not os.path.isfile(fnh):
+      fnhs = [x for x in os.listdir(PATH) if 'model_helper' in x]
+      raise ValueError('File {} not found. Avail files are: {}'.format(
+        fnh,fnhs))      
+    helper = None
+    with open(fnh, 'rb') as fh:
+      helper = pickle.load(fh)
+    return helper
+    
+  
+  
   def save_deploy_model(self, model, name, where='models'):
     """
     Saves a model for deployment
@@ -2021,19 +2038,10 @@ class Logger(object):
     None.
 
     """
-    import pickle
     assert where in ['models', 'fullpath']
     
-    PATH = 'libraries'    
-    info = sys.version_info
-    sver = '_{}{}{}'.format(info.major, info.minor, info.micro)  
-    fnh = os.path.join(PATH, 'model_helper'+sver+'.dat')
-    if not os.path.isfile(fnh):
-      fnhs = [x for x in os.listdir(PATH) if 'model_helper' in x]
-      raise ValueError('File {} not found. Avail files are: {}'.format(
-        fnh,fnhs))      
-    with open(fnh, 'rb') as fh:
-      helper = pickle.load(fh)
+    helper = self._load_helper()    
+    assert helper is not None
     
     if name[-3:] == '.h5':
       name = name[:-3]
@@ -2072,20 +2080,12 @@ class Logger(object):
     tf model
 
     """
-    import pickle
     assert where in ['models', 'fullpath']
     import tensorflow as tf
     
-    PATH = 'libraries'    
-    info = sys.version_info
-    sver = '_{}{}{}'.format(info.major, info.minor, info.micro)  
-    fnh = os.path.join(PATH, 'model_helper'+sver+'.dat')
-    if not os.path.isfile(fnh):
-      fnhs = [x for x in os.listdir(PATH) if 'model_helper' in x]
-      raise ValueError('File {} not found. Avail files are: {}'.format(
-        fnh,fnhs))      
-    with open(fnh, 'rb') as fh:
-      helper = pickle.load(fh)
+    helper = self._load_helper()
+    
+    assert helper is not None
 
     if where == 'models':
       model_file = os.path.join(self.get_models_folder(), name)
