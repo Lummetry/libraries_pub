@@ -2052,7 +2052,11 @@ class Logger(object):
       )
     return
   
-  def load_deploy_model(self, name, where='models'):
+  def load_deploy_model(self, 
+                        name, 
+                        where='models',
+                        custom_objects=None,
+                        DEBUG=False):
     """
     Loads a deployed model in production
 
@@ -2095,6 +2099,8 @@ class Logger(object):
       log=self,
       deploy_model_path=model_file,
       load_func=tf.keras.models.load_model,
+      custom_objects=custom_objects,
+      DEBUG=DEBUG,
       )
     
     return helper
