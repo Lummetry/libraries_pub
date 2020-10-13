@@ -2004,7 +2004,7 @@ class Logger(object):
   
   def _load_helper(self):
     import pickle
-    PATH = 'libraries'    
+    PATH = 'libraries_pub'    
     info = sys.version_info
     sver = '_{}{}{}'.format(info.major, info.minor, info.micro)  
     fnh = os.path.join(PATH, 'model_helper'+sver+'.dat')
