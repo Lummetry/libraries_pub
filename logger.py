@@ -22,7 +22,7 @@ from io import BytesIO, TextIOWrapper
 
 __deployment__ = 'pub'
 
-__VER__ = '1.0.4.3'
+__VER__ = '1.0.4.4'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -2028,6 +2028,9 @@ class Logger(object):
     """
     if not os.path.isfile(filename):
       raise ValueError("File '{}' not found!".format(filename))
+    if os.path.splitext(filename)[-1].lower() != 'lib':
+      raise ValueError("Deployed libraries must have '.lib' extension. Received: '{}'".format(
+        filename))
     helper = self._load_helper()
     lib = helper.load_lib(self, filename)
     return lib
