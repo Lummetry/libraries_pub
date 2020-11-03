@@ -1989,33 +1989,48 @@ class Logger(object):
   ##################################################################
   ##################################################################
   
-  def load_code(self, obj, name, folder):
+  def load_code(self, name, folder):
     import pickle
     info = sys.version_info
     sver = '_{}{}{}'.format(info.major, info.minor, info.micro)  
     assert not any(char.isdigit() for char in name), "name must not contain numbers - {}".format(name)
-    
+
     fn = os.path.join(folder, name + sver +'.dat')
-    with open(fn, 'wb') as fh:
+
+    if not os.path.isfile(fn):
+      fnhs = [x for x in os.listdir(folder) if name in x]
+      raise ValueError('File {} not found. Avail files are: {}'.format(
+        fn,fnhs))      
+    
+    with open(fn, 'rb') as fh:
       data = pickle.load(fh)
     self.P("Loaded '{}'".format(fn))
     return data
   
   
   def _load_helper(self):
-    import pickle
-    PATH = 'libraries_pub'    
-    info = sys.version_info
-    sver = '_{}{}{}'.format(info.major, info.minor, info.micro)  
-    fnh = os.path.join(PATH, 'model_helper'+sver+'.dat')
-    if not os.path.isfile(fnh):
-      fnhs = [x for x in os.listdir(PATH) if 'model_helper' in x]
-      raise ValueError('File {} not found. Avail files are: {}'.format(
-        fnh,fnhs))      
-    helper = None
-    with open(fnh, 'rb') as fh:
-      helper = pickle.load(fh)
-    return helper
+    helper = self.load_code('model_helper','libraries')
+    return helper  
+  
+  def load_deployed_library(self, filename):
+    """
+    Loads a deployed library/module (.dat, .datx, etc)
+
+    Parameters
+    ----------
+    filename : str
+      relative path of the file including the filename.
+
+    Returns
+    -------
+    reference to the module.
+
+    """
+    if not os.path.isfile(filename):
+      raise ValueError("File '{}' not found!".format(filename))
+    helper = self._load_helper()
+    lib = helper.load_lib(self, filename)
+    return lib
     
   
   
