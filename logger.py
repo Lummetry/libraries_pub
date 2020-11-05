@@ -13,6 +13,11 @@ import itertools
 import numpy as np
 import traceback
 
+try:
+  import cv2
+except:
+  pass
+
 from functools import wraps
 from time import time as tm
 from collections import OrderedDict
@@ -2769,6 +2774,53 @@ class Logger(object):
     #endif
 
     return dbx.files_get_temporary_link(target_path).link
+  
+  @staticmethod
+  def center_image_coordinates(src_h, src_w, target_h, target_w):
+    asp_src = src_h / src_w
+    asp_dst = target_h / target_w
+    if asp_src > asp_dst:
+    # if src_h > src_w:
+      new_h = target_h
+      new_w = int(target_h / (src_h / src_w))
+    else:
+      new_w = target_w
+      new_h = int(target_w / (src_w / src_h))
+    # endif
+    
+    left = target_w // 2 - new_w // 2
+    top = target_h // 2 - new_h // 2
+    right = left + new_w
+    bottom = top + new_h
+    return (top, left, bottom, right), (new_h, new_w)
+  
+  @staticmethod
+  def center_image(np_src, target_h, target_w, copy=False):
+    np_source = np_src.copy() if copy else np_src
+    shape = (target_h, target_w, np_src.shape[-1]) if len(np_src.shape) == 3 else (target_h, target_w)
+    (top, left, bottom, right), (new_h, new_w) = Logger.center_image_coordinates(np_source.shape[0], np_source.shape[1], target_h, target_w)
+    np_dest = np.zeros(shape).astype(np.float32 if np_src.max() <= 1 else np.uint8)
+    np_src_mod = cv2.resize(np_src, dsize=(new_w, new_h))
+    np_dest[top:bottom, left:right] = np_src_mod
+    return np_dest
+  
+  @staticmethod
+  def np_vec_iou(boxes1, boxes2):
+    top, left, bottom, right     = np.split(boxes1, 4, axis=1)
+    _top, _left, _bottom, _right = np.split(boxes2, 4, axis=1)
+    xA = np.maximum(left, np.transpose(_left))
+    yA = np.maximum(top, np.transpose(_top))
+    xB = np.minimum(right, np.transpose(_right))
+    yB = np.minimum(bottom, np.transpose(_bottom))
+    inter_length = (xB - xA + 1)
+    inter_height = (yB - yA + 1)
+    inter_area = np.maximum(inter_length, 0) * np.maximum(inter_height, 0)
+    boxA_area = (right - left + 1) * (bottom - top + 1)
+    boxB_area = (_right - _left + 1) * (_bottom - _top + 1)
+    iou = inter_area / (boxA_area + np.transpose(boxB_area) - inter_area)
+    return iou, (inter_area/boxA_area, inter_area/boxB_area), (inter_length, inter_height)
+
+  
   #enddef
 
   ################################################################
