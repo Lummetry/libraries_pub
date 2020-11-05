@@ -2014,7 +2014,7 @@ class Logger(object):
   
   
   def _load_helper(self):
-    helper = self.load_code('model_helper','libraries')
+    helper = self.load_code('model_helper', 'libraries_pub')
     return helper  
   
   def load_deployed_library(self, filename):
@@ -2087,7 +2087,8 @@ class Logger(object):
                         name, 
                         where='models',
                         custom_objects=None,
-                        DEBUG=False):
+                        DEBUG=False,
+                        load_func=None):
     """
     Loads a deployed model in production
 
@@ -2118,10 +2119,13 @@ class Logger(object):
     if not os.path.isfile(model_file):
       raise ValueError("Model data not found '{}'".format(model_file))
     
+    if load_func is None:
+      load_func = tf.keras.models.load_model
+      
     helper.load_for_serving(
       log=self,
       deploy_model_path=model_file,
-      load_func=tf.keras.models.load_model,
+      load_func=load_func,
       custom_objects=custom_objects,
       DEBUG=DEBUG,
       )
