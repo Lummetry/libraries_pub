@@ -2033,7 +2033,7 @@ class Logger(object):
     """
     if not os.path.isfile(filename):
       raise ValueError("File '{}' not found!".format(filename))
-    if os.path.splitext(filename)[-1].lower() != 'lib':
+    if os.path.splitext(filename)[-1].lower() != '.lib':
       raise ValueError("Deployed libraries must have '.lib' extension. Received: '{}'".format(
         filename))
     helper = self._load_helper()
