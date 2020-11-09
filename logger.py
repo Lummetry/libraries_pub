@@ -2017,7 +2017,7 @@ class Logger(object):
     helper = self.load_code('model_helper', 'libraries_pub')
     return helper  
   
-  def load_deployed_library(self, filename):
+  def load_deployed_library(self, filename, debug=False):
     """
     Loads a deployed library/module (.dat, .datx, etc)
 
@@ -2037,7 +2037,7 @@ class Logger(object):
       raise ValueError("Deployed libraries must have '.lib' extension. Received: '{}'".format(
         filename))
     helper = self._load_helper()
-    lib = helper.load_lib(self, filename)
+    lib = helper.load_lib(self, filename, DEBUG=debug)
     return lib
     
   
