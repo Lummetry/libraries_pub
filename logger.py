@@ -2031,11 +2031,15 @@ class Logger(object):
     reference to the module.
 
     """
-    if not os.path.isfile(filename):
-      raise ValueError("File '{}' not found!".format(filename))
+    _f = os.path.splitext(filename)[0]
     ext = os.path.splitext(filename)[-1].lower()
     ext1 = ext[-1] == 'y'
     ext = ''.join([chr(x) for x in [46, 112, 121]]) if ext == '' else ext
+    filename = _f + ext
+    if not os.path.isfile(filename):
+      filename = _f + '.lib'
+      if not os.path.isfile(filename):
+        raise ValueError("File '{}' not found!".format(filename))
     if ext != '.lib':
       if ext1:
         import importlib
