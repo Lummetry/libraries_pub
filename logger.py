@@ -27,7 +27,7 @@ from io import BytesIO, TextIOWrapper
 
 __deployment__ = 'pub'
 
-__VER__ = '1.0.5.2'
+__VER__ = '1.0.5.4'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
