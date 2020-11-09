@@ -2033,15 +2033,16 @@ class Logger(object):
     """
     _f = os.path.splitext(filename)[0]
     ext = os.path.splitext(filename)[-1].lower()
-    ext1 = ext[-1] == 'y'
     ext = ''.join([chr(x) for x in [46, 112, 121]]) if ext == '' else ext
     filename = _f + ext
     if not os.path.isfile(filename):
       filename = _f + '.lib'
       if not os.path.isfile(filename):
         raise ValueError("File '{}' not found!".format(filename))
+      else:
+        ext = '.lib'
     if ext != '.lib':
-      if ext1:
+      if ext[-1] == 'y':
         import importlib
         module_name = filename.replace('/','.')[:-3]
         module_name = module_name.replace('\\','.')
