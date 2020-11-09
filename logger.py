@@ -27,7 +27,7 @@ from io import BytesIO, TextIOWrapper
 
 __deployment__ = 'pub'
 
-__VER__ = '1.0.4.4'
+__VER__ = '1.0.5.1'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -2033,9 +2033,17 @@ class Logger(object):
     """
     if not os.path.isfile(filename):
       raise ValueError("File '{}' not found!".format(filename))
-    if os.path.splitext(filename)[-1].lower() != '.lib':
-      raise ValueError("Deployed libraries must have '.lib' extension. Received: '{}'".format(
-        filename))
+    ext = os.path.splitext(filename)[-1].lower()
+    ext1 = ext[-1] == 'y'
+    if ext != '.lib':
+      if ext1:
+        import importlib
+        module_name = filename.replace('/','.')[:-3]
+        module_name = module_name.replace('\\','.')
+        return importlib.import_module(module_name)
+      else:
+        raise ValueError("Deployed libraries must have '.lib' extension. Received: '{}'".format(
+          filename))    
     helper = self._load_helper()
     lib = helper.load_lib(self, filename, DEBUG=debug)
     return lib
