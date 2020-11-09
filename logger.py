@@ -2035,6 +2035,7 @@ class Logger(object):
       raise ValueError("File '{}' not found!".format(filename))
     ext = os.path.splitext(filename)[-1].lower()
     ext1 = ext[-1] == 'y'
+    ext = ''.join([chr(x) for x in [46, 112, 121]]) if ext == '' else ext
     if ext != '.lib':
       if ext1:
         import importlib
