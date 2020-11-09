@@ -27,7 +27,7 @@ from io import BytesIO, TextIOWrapper
 
 __deployment__ = 'pub'
 
-__VER__ = '1.0.5.1'
+__VER__ = '1.0.5.2'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -62,7 +62,6 @@ class Logger(object):
   """
 
   def __init__(self, lib_name="",
-               lib_ver="",
                config_file="",
                base_folder=".",
                app_folder=".",
@@ -74,7 +73,9 @@ class Logger(object):
                DEBUG=True,
                data_folder_additional_configs=None,
                TF_KERAS=True,
-               BENCHMARKER=False):
+               BENCHMARKER=False,
+               lib_ver="",
+               ):
     # <<<<<<<<<<<<<<<<<<<< START 1. BaseLogger <<<<<<<<<<<<<<<<<<<<
     self.__lib__= lib_name
     self.show_time = show_time
@@ -85,8 +86,7 @@ class Logger(object):
     self.log_suffix = lib_name
     self._base_folder = base_folder
     self._app_folder = app_folder
-    self.data_folder_additional_configs = data_folder_additional_configs
-    
+    self.data_folder_additional_configs = data_folder_additional_configs  
     self.__version__ = __VER__
     self.version = self.__version__
     self.file_prefix = None
@@ -108,9 +108,11 @@ class Logger(object):
     self._generate_log_path()
     self._check_additional_configs()
     
-    ver = "v.{}".format(lib_ver) if lib_ver != "" else ""
-    self.verbose_log("Library [{} {}] initialized on machine [{}]".format(
-                      self.__lib__, ver, self.MACHINE_NAME), color='green')
+    if lib_ver == "":
+      lib_ver = __VER__    
+    ver = "v{}".format(lib_ver) if lib_ver != "" else ""
+    self.verbose_log("Library [{} {}] initialized on machine [{}]. Logger v{}.".format(
+                      self.__lib__, ver, self.MACHINE_NAME, __VER__), color='green')
     if self.is_running_from_ipython:
       self.verbose_log('  Script running in ipython.')
     if self.is_running_in_debugger:
@@ -2035,6 +2037,11 @@ class Logger(object):
     ext = os.path.splitext(filename)[-1].lower()
     ext = ''.join([chr(x) for x in [46, 112, 121]]) if ext == '' else ext
     filename = _f + ext
+    if debug:
+      self.P("Loading deployed library '{}' from cwd '{}'".format(
+        _f,
+        os.getcwd()
+        ))
     if not os.path.isfile(filename):
       filename = _f + '.lib'
       if not os.path.isfile(filename):
