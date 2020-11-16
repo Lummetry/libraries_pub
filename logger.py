@@ -75,9 +75,11 @@ class Logger(object):
                TF_KERAS=True,
                BENCHMARKER=False,
                lib_ver="",
+               use_colors=True,
                ):
     # <<<<<<<<<<<<<<<<<<<< START 1. BaseLogger <<<<<<<<<<<<<<<<<<<<
     self.__lib__= lib_name
+    self.use_colors = use_colors
     self.show_time = show_time
     self.no_folders_no_save = no_folders_no_save
     self.max_lines = max_lines
@@ -173,7 +175,7 @@ class Logger(object):
       logstr += " [{:.2f}s]".format(elapsed)
     self.app_log.append(logstr)
     if show:
-      if color is not None:
+      if color is not None and self.use_colors:
         COLORS = {
           'r' : "\x1b[1;31m",
           'g' : "\x1b[1;32m",
