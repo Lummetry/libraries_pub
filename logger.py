@@ -1400,7 +1400,7 @@ class Logger(object):
       
     ext = os.path.splitext(datafile)[-1]
     file_path = datafile
-    self.P("Loading datframe '{}'...".format(datafile))
+    self.P("Loading dataframe '{}'...".format(datafile))
     if ext.lower() == '.zip':
       df = pd.read_pickle(file_path)
     else:
