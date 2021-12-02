@@ -20,8 +20,9 @@ Copyright 2019 Lummetry.AI (Knowledge Investment Group SRL). All Rights Reserved
 @description:
 """
 
-import json
-from . import Logger
+
+from libraries import Logger
+from collections import deque
 
 __VER__ = '0.2.0.2'
 
@@ -41,8 +42,12 @@ class LummetryObject(object):
     you can safely proceed with other initilization 
   
   """
-  def __init__(self, log : Logger, DEBUG=False, show_prefixes=False,
-               prefix_log=None, **kwargs):
+  def __init__(self, log : Logger,
+               DEBUG=False,
+               show_prefixes=False,
+               prefix_log=None,
+               maxlen_notifications=None,
+               **kwargs):
 
     super(LummetryObject, self).__init__()
 
@@ -55,10 +60,13 @@ class LummetryObject(object):
     self.prefix_log = prefix_log
     self.config_data = self.log.config_data
     self.DEBUG = DEBUG
+
+    self._messages = deque(maxlen=maxlen_notifications)
+
     if not hasattr(self, '__name__'):
       self.__name__ = 'LummetryBaseClass'
     self.startup()
-    
+
     return
   
 
@@ -87,7 +95,6 @@ class LummetryObject(object):
       setattr(self, k, v)
 
     return
-
 
   def startup(self):
     self.log.set_nice_prints()
@@ -144,12 +151,6 @@ class LummetryObject(object):
     return self.log.end_timer(sname=self.__name__ + '_' + tmr_id,
                               skip_first_timing=skip_first_timing)
 
-  def save_json(self, json_data, fname):
-    if self.output_local:
-      with open(fname, 'w') as f:
-        json.dump(json_data, f, sort_keys=True, indent=4)
-    else:
-      self.log.save_output_json(json_data, fname) 
   
   def raise_error(self, error_text):
     """
@@ -165,6 +166,25 @@ class LummetryObject(object):
     else:
       tn = '{}__{}'.format(self.__class__.__name__, name)
     return tn
+
+  def _create_notification(self, message_type, str_message):
+    message = {
+      'MODULE': self.__class__.__name__
+    }
+
+    if hasattr(self, '__version__'):
+      message['VERSION'] = self.__version__
+
+    message['NOTIFICATION_TYPE'] = message_type
+    message['NOTIFICATION'] = str_message
+    self._messages.append(message)
+    return
+
+  def get_notifications(self):
+    lst = []
+    while len(self._messages) > 0:
+      lst.append(self._messages.popleft())
+    return lst
   
   
 if __name__ == '__main__':
