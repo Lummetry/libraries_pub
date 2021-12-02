@@ -167,7 +167,7 @@ class LummetryObject(object):
       tn = '{}__{}'.format(self.__class__.__name__, name)
     return tn
 
-  def _create_notification(self, message_type, str_message):
+  def _create_notification(self, notification_type, notification):
     message = {
       'MODULE': self.__class__.__name__
     }
@@ -175,8 +175,8 @@ class LummetryObject(object):
     if hasattr(self, '__version__'):
       message['VERSION'] = self.__version__
 
-    message['NOTIFICATION_TYPE'] = message_type
-    message['NOTIFICATION'] = str_message
+    message['NOTIFICATION_TYPE'] = notification_type
+    message['NOTIFICATION'] = notification
     self._messages.append(message)
     return
 
