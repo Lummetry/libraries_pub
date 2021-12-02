@@ -64,7 +64,7 @@ class LummetryObject(object):
     self._messages = deque(maxlen=maxlen_notifications)
 
     if not hasattr(self, '__name__'):
-      self.__name__ = 'LummetryBaseClass'
+      self.__name__ = self.__class__.__name__
     self.startup()
 
     return
@@ -145,8 +145,7 @@ class LummetryObject(object):
   
   def start_timer(self, tmr_id):    
     return self.log.start_timer(sname=self.__name__ + '_' + tmr_id)
-  
-  
+
   def end_timer(self, tmr_id, skip_first_timing=True):
     return self.log.end_timer(sname=self.__name__ + '_' + tmr_id,
                               skip_first_timing=skip_first_timing)
@@ -177,6 +176,7 @@ class LummetryObject(object):
 
     message['NOTIFICATION_TYPE'] = notification_type
     message['NOTIFICATION'] = notification
+    message['TIMESTAMP'] = self.log.now_str(nice_print=True, short=False)
     self._messages.append(message)
     return
 

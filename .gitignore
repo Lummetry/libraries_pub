@@ -4,3 +4,8 @@ __pycache__/
 .DS_Store
 
 ts/params/*.py
+
+*/_logs/*
+*/_data/*
+*/_models/*
+*/_output/*
