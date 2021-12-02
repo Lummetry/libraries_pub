@@ -1,0 +1,6 @@
+__pycache__/
+.spyproject
+*.pyc
+.DS_Store
+
+ts/params/*.py
