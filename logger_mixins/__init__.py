@@ -125,11 +125,6 @@ except ModuleNotFoundError:
   _NLPMixin = None
 
 try:
-  from .no_bucket_functionalities_mixin import _NoBucketFunctionalitiesMixin
-except ModuleNotFoundError:
-  _NoBucketFunctionalitiesMixin = None
-
-try:
   from .package_loader_mixin import _PackageLoaderMixin
 except ModuleNotFoundError:
   _PackageLoaderMixin = None
@@ -138,6 +133,11 @@ try:
   from .process_mixin import _ProcessMixin
 except ModuleNotFoundError:
   _ProcessMixin = None
+
+try:
+  from .public_tfkeras_mixin import _PublicTFKerasMixin
+except ModuleNotFoundError:
+  _PublicTFKerasMixin = None
 
 try:
   from .resource_size_mixin import _ResourceSizeMixin
@@ -178,6 +178,11 @@ try:
   from .upload_mixin import _UploadMixin
 except ModuleNotFoundError:
   _UploadMixin = None
+
+try:
+  from .utils_mixin import _UtilsMixin
+except ModuleNotFoundError:
+  _UtilsMixin = None
 
 try:
   from .vector_space_mixin import _VectorSpaceMixin

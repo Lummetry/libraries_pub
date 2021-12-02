@@ -19,8 +19,8 @@ Copyright 2019-2021 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 @description:
 """
 
-from .base_logger import BaseLogger
-from .logger_mixins import (
+from libraries.base_logger import BaseLogger
+from libraries.logger_mixins import (
   _TimersMixin,
   _MatplotlibMixin,
   _HistogramMixin,
@@ -35,8 +35,8 @@ from .logger_mixins import (
   _MachineMixin,
   _GPUMixin,
   _PackageLoaderMixin,
-  _BasicTFKerasMixin,
-  _NoBucketFunctionalitiesMixin
+  _PublicTFKerasMixin,
+  _UtilsMixin
 )
 
 class DotDict(dict):
@@ -46,7 +46,6 @@ class DotDict(dict):
 
 class Logger(
   BaseLogger,
-  _BasicTFKerasMixin,
   _DataFrameMixin,
   _DateTimeMixin,
   _DownloadMixin,
@@ -56,12 +55,13 @@ class Logger(
   _MatplotlibMixin,
   _PackageLoaderMixin,
   _ProcessMixin,
+  _PublicTFKerasMixin,
   _GeneralSerializationMixin,
   _JSONSerializationMixin,
   _PickleSerializationMixin,
   _TimersMixin,
   _UploadMixin,
-  _NoBucketFunctionalitiesMixin
+  _UtilsMixin
 ):
 
   def __init__(self, lib_name="",
