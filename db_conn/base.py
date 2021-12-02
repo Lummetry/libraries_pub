@@ -27,9 +27,10 @@ import pandas as pd
 
 
 class BaseConnector(LummetryObject):
-  def __init__(self, log, config, **kwargs):
+  def __init__(self, log, config, verbose=True, **kwargs):
     self.readers = {}
     self.config = config
+    self.verbose = verbose
     super(BaseConnector, self).__init__(log=log, prefix_log='[CONN]', **kwargs)
     return
 
@@ -66,7 +67,8 @@ class BaseConnector(LummetryObject):
       try:
         reader = self._create_reader(**query_params)
         self.readers[reader_name] = reader
-        self.P("Successfully created reader {}".format(reader_name), color='g')
+        if self.verbose:
+          self.P("Successfully created reader {}".format(reader_name), color='g')
       except Exception as e:
         self.P("Error creating reader {}\n{}".format(reader_name, e), color='r')
     #endif
