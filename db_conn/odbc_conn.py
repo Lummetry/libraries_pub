@@ -53,10 +53,52 @@ class ODBCConnector(BaseConnector):
       chunksize = nr_rows
     #endif
 
-    self.reader = pd.read_sql(
+    reader = pd.read_sql(
       sql=sql_query,
       con=self._cnxn,
       chunksize=chunksize
      )
 
-    return
+    return reader
+
+
+if __name__ == '__main__':
+
+  from libraries import Logger
+
+  log = Logger(
+    lib_name='DB', base_folder='dropbox', app_folder='_lens_data/_product_dynamics',
+    TF_KERAS=False
+  )
+
+  config = {
+    'CONNECT_PARAMS' : {
+      'DRIVER' : '{ODBC Driver 17 for SQL Server}',
+      'SERVER' : 'cloudifiersql1.database.windows.net',
+      'PORT' : 1433,
+      'DATABASE' : 'operational',
+      'Uid' : 'damian',
+      'Pwd' : 'MLteam2021!',
+      'Encrypt' : 'yes',
+      'TrustServerCertificate' : 'no',
+      'Connection Timeout': 30,
+    },
+
+    'QUERY_PARAMS' : {
+      'default' : {
+        'TABLE_DATA' : 'Invoices',
+        'SQL_QUERY' : "", ### custom sql query on 'TABLE_DATA' (groupby etc etc); if empty it uses a default sql query
+        'CHUNKSIZE' : 200, ### if removed, then the generator conn.data_chunk_generator() will have only one step
+      },
+
+      'default2' : {
+        'TABLE_DATA' : 'Invoices',
+        "SQL_QUERY" : "",
+        'CHUNKSIZE' : 200,
+      }
+    }
+  }
+
+  conn = ODBCConnector(log=log, config=config)
+  conn.connect(nr_retries=5)
+  dct_data = conn.get_all_data()

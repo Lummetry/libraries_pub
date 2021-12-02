@@ -23,10 +23,11 @@ Copyright 2019-2021 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 from libraries import LummetryObject
 import abc
 import time as tm
+import pandas as pd
 
 class BaseConnector(LummetryObject):
   def __init__(self, log, config, **kwargs):
-    self.reader = None
+    self.readers = {}
     self.config = config
     super(BaseConnector, self).__init__(log=log, prefix_log='[CONN]', **kwargs)
     return
@@ -50,12 +51,37 @@ class BaseConnector(LummetryObject):
     #endwhile
     return
 
-  def data_chunk_generator(self):
-    if not self.reader:
-      self._create_reader(**self.config['QUERY_PARAMS'])
+  def create_reader(self, reader_name):
+    query_params = self.config['QUERY_PARAMS'].get(reader_name, None)
+    if query_params is None:
+      self.P("Could not create reader {}. No query params provided.".format(reader_name), color='r')
 
-    self.P("Iterating chunks ...", color='b')
-    for i,df_chunk in enumerate(self.reader):
+    reader = self.readers.get(reader_name, None)
+    if reader is None:
+      try:
+        reader = self._create_reader(**query_params)
+        self.readers[reader_name] = reader
+        self.P("Successfully created reader {}".format(reader_name), color='g')
+      except Exception as e:
+        self.P("Error creating reader {}\n{}".format(reader_name, e), color='r')
+
+    #endif
+    return
+
+  def create_readers(self):
+    reader_names = list(self.config['QUERY_PARAMS'].keys())
+    for reader_name in reader_names:
+      self.create_reader(reader_name)
+    return
+
+  def get_data_generator(self, reader_name):
+    self.create_reader(reader_name)
+    reader = self.readers.get(reader_name, None)
+    if not reader:
+      return
+
+    self.P("Iterating chunks for reader {} ...".format(reader_name), color='b')
+    for i, df_chunk in enumerate(reader):
       d1, d2 = df_chunk.shape
       print_msg = "Chunk events: {}".format(d1)
       if i == 0:
@@ -65,6 +91,26 @@ class BaseConnector(LummetryObject):
 
       yield df_chunk
 
+  def get_all_data_generators(self):
+    reader_names = list(self.config['QUERY_PARAMS'].keys())
+    for reader_name in reader_names:
+      for df_chunk in self.get_data_generator(reader_name):
+        yield reader_name, df_chunk
+
+  def get_data(self, reader_name):
+    lst_df_chunks = []
+    for df_chunk in self.get_data_generator(reader_name):
+      lst_df_chunks.append(df_chunk)
+
+    return pd.concat(lst_df_chunks)
+
+  def get_all_data(self):
+    reader_names = list(self.config['QUERY_PARAMS'].keys())
+    dct_all_data = {}
+    for reader_name in reader_names:
+      dct_all_data[reader_name] = self.get_data(reader_name)
+
+    return dct_all_data
 
   def _connect(self, **kwargs):
     return
