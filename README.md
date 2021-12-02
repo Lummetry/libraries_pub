@@ -1,1 +1,1 @@
-# libraries_pub
+# Lummetry.AI public `libraries` package
