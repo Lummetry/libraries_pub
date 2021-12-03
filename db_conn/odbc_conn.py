@@ -39,26 +39,18 @@ class ODBCConnector(BaseConnector):
     return
 
   def _create_reader(self, **kwargs):
-    table_data = kwargs['TABLE_DATA']
-    chunksize = kwargs.get('CHUNKSIZE', None)
-    sql_query = kwargs.get('SQL_QUERY', "")
-    if len(sql_query) == 0:
+    table_data = kwargs.get('table_data', '')
+    chunksize = kwargs.get('chunksize', None)
+    sql_query = kwargs.get('sql_query', '')
+    assert len(table_data) > 0 or len(sql_query) >0, "Must either have table or SQL query"
+    if len(sql_query) == 0:      
       sql_query = self._default_sql_query.format(table_data)
-
-    if chunksize is None:
-      _sql_count_query = "SELECT COUNT(*) FROM {};".format(table_data)
-      cursor = self._cnxn.cursor()
-      cursor.execute(_sql_count_query)
-      nr_rows = cursor.fetchone()[0]
-      chunksize = nr_rows
-    #endif
 
     reader = pd.read_sql(
       sql=sql_query,
       con=self._cnxn,
       chunksize=chunksize
      )
-
     return reader
 
 
@@ -86,15 +78,15 @@ if __name__ == '__main__':
 
     'QUERY_PARAMS' : {
       'default' : {
-        'TABLE_DATA' : 'Invoices',
-        'SQL_QUERY' : "", ### custom sql query on 'TABLE_DATA' (groupby etc etc); if empty it uses a default sql query
-        'CHUNKSIZE' : 200, ### if removed, then the generator conn.data_chunk_generator() will have only one step
+        'table_data' : 'Invoices',
+        'sql_query' : "", ### custom sql query on 'TABLE_DATA' (groupby etc etc); if empty it uses a default sql query
+        'chunksize' : 200, ### if removed, then the generator conn.data_chunk_generator() will have only one step
       },
 
       'default2' : {
-        'TABLE_DATA' : 'Invoices',
-        "SQL_QUERY" : "",
-        'CHUNKSIZE' : 200,
+        'table_data' : 'Invoices',
+        "sql_query" : "",
+        'chunksize' : 200,
       }
     }
   }
