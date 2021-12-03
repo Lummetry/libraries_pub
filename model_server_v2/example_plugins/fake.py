@@ -48,7 +48,7 @@ class FakeWorker(FlaskWorker):
   def _predict(self, prep_inputs):
     self._create_notification(
       notification_type='log',
-      notification=(self._counter, 'Predicting on usr_input: {}'.format(prep_inputs))
+      notification='Predicting on usr_input: {}'.format(prep_inputs)
     )
 
     res = '{}+{}={} PREDICTED'.format(prep_inputs, self.cfg_add, int(prep_inputs) + self.cfg_add)

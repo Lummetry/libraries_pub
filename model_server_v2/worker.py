@@ -73,7 +73,7 @@ class FlaskWorker(LummetryObject):
       _err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
       self._create_notification(
         notification_type='exception',
-        notification=(self._counter, 'Exception in _pre_process:\n{}'.format(_err_dict))
+        notification='Exception in _pre_process:\n{}'.format(_err_dict)
       )
       return
 
@@ -89,7 +89,7 @@ class FlaskWorker(LummetryObject):
       _err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
       self._create_notification(
         notification_type='exception',
-        notification=(self._counter, 'Exception in _predict:\n{}'.format(_err_dict))
+        notification='Exception in _predict:\n{}'.format(_err_dict)
       )
       return
 
@@ -101,11 +101,12 @@ class FlaskWorker(LummetryObject):
 
     try:
       answer = self._post_process(pred)
+      ### TODO add meta info - semnatura microserviciului;
     except:
       _err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
       self._create_notification(
         notification_type='exception',
-        notification=(self._counter, 'Exception in _post_process\n{}'.format(_err_dict))
+        notification='Exception in _post_process\n{}'.format(_err_dict)
       )
       return
 
@@ -129,3 +130,8 @@ class FlaskWorker(LummetryObject):
 
     self.end_timer('execute')
     return answer
+
+  def _create_notification(self, notification_type, notification):
+    notification = (self._counter, notification)
+    super()._create_notification(notification_type=notification_type, notification=notification)
+    return
