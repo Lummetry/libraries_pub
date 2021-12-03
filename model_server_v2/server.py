@@ -254,7 +254,7 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     else:
       if isinstance(answer, dict):
         answer['call_id'] = self._counter
-        answer['wid'] = wid
+        answer['wid'] = wid ### TODO combina semnatura cu wid
         jresponse = flask.jsonify(answer)
       else:
         assert isinstance(answer, str)
@@ -284,6 +284,7 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
       if isinstance(notif['NOTIFICATION'], tuple):
         counter, msg = notif['NOTIFICATION']
+        counter = str(counter)
         dct['NOTIF'] = msg
 
         if counter not in dct_notifs_per_call:
@@ -298,7 +299,10 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
     #endfor
 
-    jresponse = flask.jsonify({**{0 : lst_general_notifs}, **dct_notifs_per_call})
+    jresponse = flask.jsonify({
+      **{"GENERAL" : lst_general_notifs},
+      **dct_notifs_per_call
+    })
     return jresponse
 
   def _view_func_workers_endpoint(self):

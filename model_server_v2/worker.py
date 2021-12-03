@@ -31,6 +31,7 @@ class FlaskWorker(LummetryObject):
     self._verbosity_level = verbosity_level
 
     self._counter = None
+    self.__encountered_error = None
     super(FlaskWorker, self).__init__(log=log, maxlen_notifications=1000, **kwargs)
     return
 
@@ -70,10 +71,11 @@ class FlaskWorker(LummetryObject):
     try:
       prep_inputs = self._pre_process(inputs)
     except:
-      _err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
+      err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
+      self.__encountered_error = err_dict['ERR_MSG']
       self._create_notification(
         notification_type='exception',
-        notification='Exception in _pre_process:\n{}'.format(_err_dict)
+        notification='Exception in _pre_process:\n{}'.format(err_dict)
       )
       return
 
@@ -86,10 +88,11 @@ class FlaskWorker(LummetryObject):
     try:
       pred = self._predict(prep_inputs)
     except:
-      _err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
+      err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
+      self.__encountered_error = err_dict['ERR_MSG']
       self._create_notification(
         notification_type='exception',
-        notification='Exception in _predict:\n{}'.format(_err_dict)
+        notification='Exception in _predict:\n{}'.format(err_dict)
       )
       return
 
@@ -103,10 +106,11 @@ class FlaskWorker(LummetryObject):
       answer = self._post_process(pred)
       ### TODO add meta info - semnatura microserviciului;
     except:
-      _err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
+      err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
+      self.__encountered_error = err_dict['ERR_MSG']
       self._create_notification(
         notification_type='exception',
-        notification='Exception in _post_process\n{}'.format(_err_dict)
+        notification='Exception in _post_process\n{}'.format(err_dict)
       )
       return
 
@@ -129,6 +133,10 @@ class FlaskWorker(LummetryObject):
     self.end_timer('post_process')
 
     self.end_timer('execute')
+
+    if self.__encountered_error:
+      answer = {'ERROR' : self.__encountered_error}
+
     return answer
 
   def _create_notification(self, notification_type, notification):
