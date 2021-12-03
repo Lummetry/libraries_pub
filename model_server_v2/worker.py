@@ -119,6 +119,7 @@ class FlaskWorker(LummetryObject):
   def execute(self, inputs, counter):
     self.start_timer('execute')
     self._counter = counter
+    self.__encountered_error = None
 
     self.start_timer('pre_process')
     prep_inputs = self.__pre_process(inputs)

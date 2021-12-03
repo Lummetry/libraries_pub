@@ -30,7 +30,7 @@ from libraries import LummetryObject
 from libraries import _PluginsManagerMixin
 from libraries.logger_mixins.serialization_json_mixin import NPJson
 
-__VER__ = '0.1.0.0'
+__VER__ = '0.1.0.1'
 
 class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
