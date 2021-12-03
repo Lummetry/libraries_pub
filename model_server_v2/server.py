@@ -30,7 +30,7 @@ from libraries import LummetryObject
 from libraries import _PluginsManagerMixin
 from libraries.logger_mixins.serialization_json_mixin import NPJson
 
-__VER__ = '0.1.0.1'
+__VER__ = '0.1.0.2'
 
 class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
@@ -196,7 +196,7 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
       counter=self._counter
     )
     self._mask_worker_unlocked(wid)
-    return answer, wid
+    return worker, answer, wid
 
 
   def _get_request_body(self, request):
@@ -239,10 +239,11 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
       ))
     )
 
+    worker, wid = None, -1
     if method != 'OPTIONS':
-      answer, wid = self._wait_predict(data=params)
+      worker, answer, wid = self._wait_predict(data=params)
     else:
-      answer, wid = {}, -1
+      answer = {}
 
     if answer is None:
       jresponse = flask.jsonify({
@@ -254,7 +255,8 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     else:
       if isinstance(answer, dict):
         answer['call_id'] = self._counter
-        answer['wid'] = wid ### TODO combina semnatura cu wid
+        if worker:
+          answer['signature'] = '{}:{}'.format(worker.__class__.__name__, wid)
         jresponse = flask.jsonify(answer)
       else:
         assert isinstance(answer, str)

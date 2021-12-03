@@ -104,7 +104,6 @@ class FlaskWorker(LummetryObject):
 
     try:
       answer = self._post_process(pred)
-      ### TODO add meta info - semnatura microserviciului;
     except:
       err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
       self.__encountered_error = err_dict['ERR_MSG']
