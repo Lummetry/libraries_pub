@@ -35,6 +35,10 @@ class FakeWorker(FlaskWorker):
   def cfg_add(self):
     return self.config_worker['ADD']
 
+  @property
+  def cfg_minus(self):
+    return self.config_worker.get('MINUS', None)
+
   def _load_model(self):
     return
 
@@ -51,7 +55,10 @@ class FakeWorker(FlaskWorker):
       notification='Predicting on usr_input: {}'.format(prep_inputs)
     )
 
-    res = '{}+{}={} PREDICTED'.format(prep_inputs, self.cfg_add, int(prep_inputs) + self.cfg_add)
+    if not self.cfg_minus:
+      res = '{}+{}={} PREDICTED'.format(prep_inputs, self.cfg_add, int(prep_inputs) + self.cfg_add)
+    else:
+      res = '{}+{}-{}={} PREDICTED'.format(prep_inputs, self.cfg_add, self.cfg_minus, int(prep_inputs) + self.cfg_add - self.cfg_minus)
     return res
 
   def _post_process(self, pred):

@@ -1,0 +1,8 @@
+{
+    "CONFIG_ENDPOINTS" : {
+        "fake" : {
+            "NR_WORKERS" : 7,
+            "MINUS" : 3
+        }
+    }
+}

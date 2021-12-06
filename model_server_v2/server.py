@@ -30,7 +30,9 @@ from libraries import LummetryObject
 from libraries import _PluginsManagerMixin
 from libraries.logger_mixins.serialization_json_mixin import NPJson
 
-__VER__ = '0.1.0.2'
+from libraries.model_server_v2.utils import get_api_request_body
+
+__VER__ = '0.1.1.0'
 
 class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
@@ -42,7 +44,8 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
                plugin_suffix=None,
                host=None,
                port=None,
-               endpoint_name=None,
+               config_endpoint=None,
+               execution_path=None,
                verbosity_level=1,
                nr_workers=None
                ):
@@ -54,14 +57,16 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
     self._host = host or '127.0.0.1'
     self._port = port or 5000
-    self._endpoint_name = endpoint_name or '/analyze'
+    self._execution_path = execution_path or '/analyze'
     self._verbosity_level = verbosity_level
+    self._config_endpoint = config_endpoint
 
     self._lst_workers = []
     self._mask_workers_in_use = []
     self._counter = 0
 
     self._lock = Lock()
+    self._paths = None
 
     super(FlaskModelServer, self).__init__(log=log, prefix_log='[FSKSVR]', maxlen_notifications=1000)
     return
@@ -69,12 +74,17 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
   def startup(self):
     super().startup()
     self._log_banner()
+    if 'NR_WORKERS' in self._config_endpoint:
+      self.__initial_nr_workers = self._config_endpoint.pop('NR_WORKERS')
     self._update_nr_workers(self.__initial_nr_workers)
+
+    if not self._execution_path.startswith('/'):
+      self._execution_path = '/' + self._execution_path
 
     self.app = flask.Flask('FlaskModelServer')
     self.app.json_encoder = NPJson
     self.app.add_url_rule(
-      rule=self._endpoint_name,
+      rule=self._execution_path,
       endpoint="PluginEndpoint",
       view_func=self._view_func_plugin_endpoint,
       methods=['GET', 'POST', 'OPTIONS']
@@ -92,6 +102,15 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
       endpoint='WorkersEndpoint',
       view_func=self._view_func_workers_endpoint,
       methods=['GET', 'POST'],
+    )
+
+    self._paths = [self._execution_path, '/notifications', '/update_workers']
+
+    self.app.add_url_rule(
+      rule='/get_paths',
+      endpoint='GetPathsEndpoint',
+      view_func=self._view_func_get_paths_endpoint,
+      methods=['GET', 'POST']
     )
 
     self.app.run(
@@ -132,8 +151,10 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     worker = _cls_def(
       log=self.log,
       default_config=_config_dict,
-      verbosity_level=self._verbosity_level
+      verbosity_level=self._verbosity_level,
+      upstream_config=self._config_endpoint
     )
+
     self._lst_workers.append(worker)
     self._mask_workers_in_use.append(0)
     return
@@ -198,38 +219,12 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     self._mask_worker_unlocked(wid)
     return worker, answer, wid
 
-
-  def _get_request_body(self, request):
-    method    = request.method
-    args_data = request.args
-    form_data = request.form
-    json_data = request.json
-
-    if method == 'GET':
-      # parameters in URL
-      base_params = args_data
-    else:
-      # parameters in form
-      base_params = form_data
-      if len(base_params) == 0:
-        # params in json?
-        base_params = json_data
-    #endif
-
-    if base_params is not None:
-      params = dict(base_params)
-    else:
-      params = {}
-    #endif
-
-    return params
-
   def _view_func_plugin_endpoint(self):
     self._counter += 1
     request = flask.request
     method = request.method
 
-    params = self._get_request_body(request=request)
+    params = get_api_request_body(request=request)
     client = params.get('client', 'unk')
 
     self._create_notification(
@@ -309,11 +304,14 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
   def _view_func_workers_endpoint(self):
     request = flask.request
-    params = self._get_request_body(request=request)
+    params = get_api_request_body(request=request)
 
-    nr_workers = params.get('nr_workers', None)
+    nr_workers = params.get('NR_WORKERS', None)
     if nr_workers is None:
-      return flask.jsonify({'message' : 'bad input'})
+      return flask.jsonify({'ERROR' : "Bad input. 'NR_WORKERS' not found"})
 
     self._update_nr_workers(nr_workers)
-    return flask.jsonify({'message': 'ok'})
+    return flask.jsonify({'MESSAGE': 'OK'})
+
+  def _view_func_get_paths_endpoint(self):
+    return flask.jsonify({'PATHS' : self._paths})

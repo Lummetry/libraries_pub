@@ -23,11 +23,19 @@ import abc
 
 from libraries import Logger
 from libraries import LummetryObject
+from libraries import _PluginMergeDefaultAndUpstreamConfigs
 
-class FlaskWorker(LummetryObject):
+class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
 
-  def __init__(self, log : Logger, default_config, verbosity_level, **kwargs):
-    self.config_worker = default_config
+  def __init__(self, log : Logger,
+               default_config,
+               verbosity_level,
+               upstream_config=None,
+               **kwargs):
+    self._default_config = default_config
+    self._upstream_config_params = upstream_config or {}
+    self.config_worker = None
+
     self._verbosity_level = verbosity_level
 
     self._counter = None
@@ -37,6 +45,7 @@ class FlaskWorker(LummetryObject):
 
   def startup(self):
     super().startup()
+    self.config_worker = self._merge_prepare_config()
     self._load_model()
     return
 
