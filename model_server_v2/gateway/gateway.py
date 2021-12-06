@@ -190,7 +190,7 @@ class FlaskGateway(LummetryObject):
       '--workers_location', self._workers_location,
       '--worker_name',      server_name,
       '--worker_suffix',    self._workers_suffix,
-      # '--use_tf',
+      '--use_tf',
     ])
 
     self._servers[server_name] = {
