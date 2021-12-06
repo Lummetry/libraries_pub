@@ -91,7 +91,7 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
     return prep_inputs
 
   def __predict(self, prep_inputs):
-    if not prep_inputs:
+    if prep_inputs is None:
       return
 
     try:
@@ -108,7 +108,7 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
     return pred
 
   def __post_process(self, pred):
-    if not pred:
+    if pred is None:
       return
 
     try:
