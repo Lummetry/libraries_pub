@@ -33,7 +33,7 @@ from libraries import LummetryObject
 from libraries.logger_mixins.serialization_json_mixin import NPJson
 from libraries.model_server_v2.request_utils import get_api_request_body
 
-__VER__ = '0.1.2.3'
+__VER__ = '0.1.2.4'
 
 class FlaskGateway(LummetryObject):
 
@@ -289,7 +289,7 @@ class FlaskGateway(LummetryObject):
       path
     )
 
-    response = requests.post(url, data=params)
+    response = requests.post(url, json=params)
     return flask.jsonify(response.json())
 
   def _view_func_start_server(self):
