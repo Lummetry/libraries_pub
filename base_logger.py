@@ -33,7 +33,7 @@ from time import time as tm
 from collections import OrderedDict
 from datetime import datetime as dt
 
-__VER__ = '8.0.15.2'
+__VER__ = '8.0.15.3'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -592,6 +592,18 @@ class BaseLogger(object):
 
   def get_base_folder(self):
     return self._base_folder if hasattr(self, '_base_folder') else ''
+
+  @property
+  def base_folder(self):
+    return self.get_base_folder()
+
+  @property
+  def root_folder(self):
+    return self._root_folder
+
+  @property
+  def app_folder(self):
+    return self._app_folder
 
   def get_data_folder(self):
     return self._data_dir if hasattr(self, '_data_dir') else ''
