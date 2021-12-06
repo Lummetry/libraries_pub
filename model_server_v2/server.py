@@ -30,7 +30,7 @@ from libraries import LummetryObject
 from libraries import _PluginsManagerMixin
 from libraries.logger_mixins.serialization_json_mixin import NPJson
 
-from libraries.model_server_v2.utils import get_api_request_body
+from libraries.model_server_v2.request_utils import get_api_request_body
 
 __VER__ = '0.1.2.0'
 
@@ -54,10 +54,6 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     Parameters:
     -----------
     log : Logger, mandatory
-
-    server_names: List[str], mandatory
-      The names of the servers that will be run when the gateway is opened. This names should be names of .py files
-      found in `workers_location`
 
     workers_location: str, mandatory
       Dotted path of the folder where the business logic of the workers is implemented

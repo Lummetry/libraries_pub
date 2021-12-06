@@ -33,17 +33,17 @@ from time import sleep
 from libraries import Logger
 from libraries import LummetryObject
 from libraries.logger_mixins.serialization_json_mixin import NPJson
-from libraries.model_server_v2.utils import get_api_request_body
+from libraries.model_server_v2.request_utils import get_api_request_body
 
-__VER__ = '0.1.1.0'
+__VER__ = '0.1.2.0'
 
 class FlaskGateway(LummetryObject):
 
   app = None
 
   def __init__(self, log : Logger,
-               server_names,
                workers_location,
+               server_names=None,
                workers_suffix=None,
                host=None,
                port=None,
@@ -57,12 +57,13 @@ class FlaskGateway(LummetryObject):
     -----------
     log : Logger, mandatory
 
-    server_names: List[str], mandatory
-      The names of the servers that will be run when the gateway is opened. This names should be names of .py files
-      found in `workers_location`
-
     workers_location: str, mandatory
       Dotted path of the folder where the business logic of the workers is implemented
+
+    server_names: List[str], optional
+      The names of the servers that will be run when the gateway is opened. This names should be names of .py files
+      found in `workers_location`
+      The default is None (it takes all the keys in 'CONFIG_ENDPOINTS')
 
     workers_suffix: str, optional
       For each worker, which is the suffix of the class name.
@@ -127,6 +128,9 @@ class FlaskGateway(LummetryObject):
     super().startup()
     self._log_banner()
     self._config_endpoints = self.config_data.get('CONFIG_ENDPOINTS', {})
+
+    if self._start_server_names is None:
+      self._start_server_names = list(self._config_endpoints.keys())
 
     if not self._server_execution_path.startswith('/'):
       self._server_execution_path = '/' + self._server_execution_path
