@@ -19,11 +19,9 @@ Copyright 2019-2021 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 @description:
 """
 
-import os
 import subprocess
 import json
 import requests
-import signal
 
 import flask
 
@@ -35,7 +33,7 @@ from libraries import LummetryObject
 from libraries.logger_mixins.serialization_json_mixin import NPJson
 from libraries.model_server_v2.request_utils import get_api_request_body
 
-__VER__ = '0.1.2.2'
+__VER__ = '0.1.2.3'
 
 class FlaskGateway(LummetryObject):
 
@@ -198,7 +196,7 @@ class FlaskGateway(LummetryObject):
     ])
 
     self._servers[server_name] = {
-      'PID' : process.pid,
+      'PROCESS' : process,
       'HOST' : host,
       'PORT' : port
     }
@@ -254,8 +252,8 @@ class FlaskGateway(LummetryObject):
 
     return
 
-  def _get_server_pid(self, server_name):
-    return self._servers[server_name]['PID']
+  def _get_server_process(self, server_name):
+    return self._servers[server_name]['PROCESS']
 
   def _server_exists(self, server_name):
     return server_name in self._servers
@@ -265,8 +263,8 @@ class FlaskGateway(LummetryObject):
     return list(self._servers.keys())
 
   def _kill_server_by_name(self, server_name):
-    pid = self._get_server_pid(server_name)
-    os.kill(pid, signal.SIGKILL)
+    process = self._get_server_process(server_name)
+    process.terminate()
     self._servers.pop(server_name)
     return
 
@@ -326,6 +324,9 @@ class FlaskGateway(LummetryObject):
     if not self._server_exists(signature):
       return flask.jsonify({'ERROR' : "Bad signature {}. Available signatures: {}".format(signature, self.active_servers)})
 
-    pid = self._get_server_pid(signature)
+    process = self._get_server_process(signature)
     self._kill_server_by_name(signature)
-    return flask.jsonify({'MESSAGE' : 'OK. Killed PID={}'.format(pid)})
+    return flask.jsonify({'MESSAGE' : 'OK. Killed PID={} with return_code {}.'.format(
+      process.pid,
+      process.returncode
+    )})
