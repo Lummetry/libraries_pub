@@ -35,7 +35,7 @@ from libraries import LummetryObject
 from libraries.logger_mixins.serialization_json_mixin import NPJson
 from libraries.model_server_v2.utils import get_api_request_body
 
-__VER__ = '0.1.0.0'
+__VER__ = '0.1.0.1'
 
 class FlaskGateway(LummetryObject):
 
@@ -155,7 +155,7 @@ class FlaskGateway(LummetryObject):
       '--plugins_location', self._plugins_location,
       '--plugin_name',      server_name,
       '--plugin_suffix',    self._plugins_suffix,
-      # '--use_tf',
+      '--use_tf',
     ])
 
     self._servers[server_name] = {
