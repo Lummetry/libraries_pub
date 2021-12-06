@@ -35,7 +35,7 @@ from libraries import LummetryObject
 from libraries.logger_mixins.serialization_json_mixin import NPJson
 from libraries.model_server_v2.utils import get_api_request_body
 
-__VER__ = '0.1.0.1'
+__VER__ = '0.1.1.0'
 
 class FlaskGateway(LummetryObject):
 
@@ -43,8 +43,8 @@ class FlaskGateway(LummetryObject):
 
   def __init__(self, log : Logger,
                server_names,
-               plugins_location,
-               plugins_suffix=None,
+               workers_location,
+               workers_suffix=None,
                host=None,
                port=None,
                first_server_port=None,
@@ -52,14 +52,49 @@ class FlaskGateway(LummetryObject):
                **kwargs
               ):
 
+    """
+    Parameters:
+    -----------
+    log : Logger, mandatory
+
+    server_names: List[str], mandatory
+      The names of the servers that will be run when the gateway is opened. This names should be names of .py files
+      found in `workers_location`
+
+    workers_location: str, mandatory
+      Dotted path of the folder where the business logic of the workers is implemented
+
+    workers_suffix: str, optional
+      For each worker, which is the suffix of the class name.
+      e.g. if the worker .py file is called 'get_similarity.py', then the name of the class is GetSimilarity<Suffix>.
+      If `workers_suffix=Worker`; then the name of the class is GetSimilarityWorker
+      The default is None
+
+    host: str, optional
+      Host of the gateway
+      The default is None ('127.0.0.1')
+
+    port: int, optional
+      Port of the gateway
+      The default is None (5000)
+
+    first_server_port: int, optional
+      Port of the first server (the ports are allocated sequentially starting with `first_port_server`)
+      The default is None (port+1)
+
+    server_execution_path: str, optional
+      The API rule where the worker logic is executed.
+      The default is None ('/analyze')
+    """
+
     self.__version__ = __VER__
 
     self._start_server_names = server_names
     self._host = host or '127.0.0.1'
     self._port = port or 5000
     self._server_execution_path = server_execution_path or '/analyze'
-    self._plugins_location = plugins_location
-    self._plugins_suffix = plugins_suffix
+    self._workers_location = workers_location
+    self._workers_suffix = workers_suffix
 
     self._first_server_port = first_server_port or self._port + 1
     self._current_server_port = self._first_server_port
@@ -152,10 +187,10 @@ class FlaskGateway(LummetryObject):
       '--host',             host,
       '--port',             str(port),
       '--execution_path',   execution_path,
-      '--plugins_location', self._plugins_location,
-      '--plugin_name',      server_name,
-      '--plugin_suffix',    self._plugins_suffix,
-      '--use_tf',
+      '--workers_location', self._workers_location,
+      '--worker_name',      server_name,
+      '--worker_suffix',    self._workers_suffix,
+      # '--use_tf',
     ])
 
     self._servers[server_name] = {

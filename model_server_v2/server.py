@@ -32,16 +32,16 @@ from libraries.logger_mixins.serialization_json_mixin import NPJson
 
 from libraries.model_server_v2.utils import get_api_request_body
 
-__VER__ = '0.1.1.0'
+__VER__ = '0.1.2.0'
 
 class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
   app = None
 
   def __init__(self, log : Logger,
-               plugins_location,
-               plugin_name,
-               plugin_suffix=None,
+               workers_location,
+               worker_name,
+               worker_suffix=None,
                host=None,
                port=None,
                config_endpoint=None,
@@ -49,17 +49,65 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
                verbosity_level=1,
                nr_workers=None
                ):
+
+    """
+    Parameters:
+    -----------
+    log : Logger, mandatory
+
+    server_names: List[str], mandatory
+      The names of the servers that will be run when the gateway is opened. This names should be names of .py files
+      found in `workers_location`
+
+    workers_location: str, mandatory
+      Dotted path of the folder where the business logic of the workers is implemented
+
+    worker_name: str, mandatory
+      Which implementation found in `workers_location` is started in this server
+
+    worker_suffix: str, optional
+      Which is the suffix of the class name for the started worker
+      e.g. if the worker .py file is called 'get_similarity.py', then the name of the class is GetSimilarity<Suffix>.
+      If `worker_suffix=Worker`; then the name of the class is GetSimilarityWorker
+      The default is None
+
+    host: str, optional
+      Host of the gateway
+      The default is None ('127.0.0.1')
+
+    port: int, optional
+      Port of the gateway
+      The default is None (5000)
+
+    config_endpoint: dict, optional
+      The configuration of the endpoint:
+        * 'NR_WORKERS'
+        * other params that will be passed as upstream configuration to the worker
+      The default is None ({})
+
+    execution_path: str, optional
+      The API rule where the worker logic is executed.
+      The default is None ('/analyze')
+
+    verbosity_level: int, optional
+      The default is 1
+
+    nr_workers: int, optional
+      How many instances of the chosen worker are started.
+      The default is None (5)
+    """
+
     self.__version__ = __VER__
-    self.__plugins_location = plugins_location
-    self.__plugin_name = plugin_name
-    self.__plugin_suffix = plugin_suffix
+    self.__workers_location = workers_location
+    self.__worker_name = worker_name
+    self.__worker_suffix = worker_suffix
     self.__initial_nr_workers = nr_workers or 5
 
     self._host = host or '127.0.0.1'
     self._port = port or 5000
     self._execution_path = execution_path or '/analyze'
     self._verbosity_level = verbosity_level
-    self._config_endpoint = config_endpoint
+    self._config_endpoint = config_endpoint or {}
 
     self._lst_workers = []
     self._mask_workers_in_use = []
@@ -76,6 +124,9 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     self._log_banner()
     if 'NR_WORKERS' in self._config_endpoint:
       self.__initial_nr_workers = self._config_endpoint.pop('NR_WORKERS')
+    else:
+      self.P("WARNING: 'NR_WORKERS' not provided in endpoint configuration", color='r')
+    #endif
     self._update_nr_workers(self.__initial_nr_workers)
 
     if not self._execution_path.startswith('/'):
@@ -140,9 +191,9 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
   def _create_worker(self):
     _module_name, _class_name, _cls_def, _config_dict = self._get_module_name_and_class(
-      plugins_location=self.__plugins_location,
-      name=self.__plugin_name,
-      suffix=self.__plugin_suffix
+      plugins_location=self.__workers_location,
+      name=self.__worker_name,
+      suffix=self.__worker_suffix
     )
 
     if _cls_def is None:

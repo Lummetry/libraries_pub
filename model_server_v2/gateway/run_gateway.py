@@ -20,11 +20,11 @@ Copyright 2019-2021 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 """
 
 import argparse
-import json
 
 from libraries import Logger
 from libraries.model_server_v2.gateway import FlaskGateway
 
+### Example for running a gateway
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
 
@@ -54,6 +54,7 @@ if __name__ == '__main__':
   host = args.host
   port = args.port
 
+  ### Attention! config_file should contain the configuration for each endpoint; 'NR_WORKERS' and upstream configuration
   log = Logger(
     lib_name='GTW',
     config_file='libraries/model_server_v2/gateway/config_gateway.txt',
@@ -61,11 +62,12 @@ if __name__ == '__main__':
     TF_KERAS=False
   )
 
+
   gtw = FlaskGateway(
     log=log,
     server_names=['fake'],
-    plugins_location='libraries.model_server_v2.example_plugins',
-    plugins_suffix='Worker',
+    workers_location='libraries.model_server_v2.example_endpoints',
+    workers_suffix='Worker',
     host=host,
     port=port,
     first_server_port=port+1,

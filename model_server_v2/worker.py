@@ -27,11 +27,35 @@ from libraries import _PluginMergeDefaultAndUpstreamConfigs
 
 class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
 
+  """
+  Base class for any worker / endpoint business logic
+  """
+
   def __init__(self, log : Logger,
                default_config,
                verbosity_level,
                upstream_config=None,
                **kwargs):
+
+    """
+    Parameters:
+    -----------
+    log : Logger, mandatory
+
+    default_config: dict, mandatory
+      The default configuration of the worker.
+      See `libraries.model_server_v2.server -> create_worker` to see the entire flow; it calls `_get_module_name_and_class`
+      and searches for a `_CONFIG` in the module with the implementation and passes the value of `_CONFIG` as `default_config`
+
+    verbosity_level: int, mandatory
+      A threshold that controls the verbosity - can use it in any implementation
+
+    upstream_config: dict, optional
+      The upstream configuration that comes from a configuration file of the process; this `upstream_config` is merged with `default_config`
+      in order to compute the final config
+      The default is None ({})
+    """
+
     self._default_config = default_config
     self._upstream_config_params = upstream_config or {}
     self.config_worker = None
@@ -51,18 +75,58 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
 
   @abc.abstractmethod
   def _load_model(self):
+    """
+    Implement this method in sub-class - custom logic for loading the model. If the worker has no model, then implement
+    it as a simple `return`.
+    """
     raise NotImplementedError
 
   @abc.abstractmethod
   def _pre_process(self, inputs):
+    """
+    Implement this method in sub-class - custom logic for pre-processing the inputs that come from the user
+
+    Parameters:
+    -----------
+    inputs: dict, mandatory
+      The request json
+
+    Returns:
+    -------
+    prep_inputs:
+      Any object that will be used in `_predict` implementation
+    """
     raise NotImplementedError
 
   @abc.abstractmethod
   def _predict(self, prep_inputs):
+    """
+    Implement this method in sub-class - custom logic for predict
+
+    Parameters:
+    -----------
+    prep_inputs:
+      Any object returned by `_pre_process`
+
+    preds:
+      Any object that will be used in `_post_process` implementation
+    """
     raise NotImplementedError
 
   @abc.abstractmethod
   def _post_process(self, pred):
+    """
+    Implement this method in sub-class - custom logic for post processing the predictions
+    (packing the output that goes to the end-user)
+
+    Parameters:
+    ----------
+    pred:
+      Any object returned by `_predict`
+
+    answer: dict
+      The answer that goes to the end-user
+    """
     raise NotImplementedError
 
   @staticmethod
@@ -125,6 +189,22 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
     return answer
 
   def execute(self, inputs, counter):
+    """
+    The method exposed for execution.
+
+    Parameters:
+    ----------
+    inputs: dict, mandatory
+      The request json
+
+    counter: int, mandatory
+      The call id
+
+    Returns:
+    --------
+    answer: dict
+      The answer that goes to the end-user
+    """
     self.start_timer('execute')
     self._counter = counter
     self.__encountered_error = None

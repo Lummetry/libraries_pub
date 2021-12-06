@@ -62,15 +62,15 @@ if __name__ == '__main__':
   )
 
   parser.add_argument(
-    '--plugins_location', type=str
+    '--workers_location', type=str
   )
 
   parser.add_argument(
-    '--plugin_name', type=str
+    '--worker_name', type=str
   )
 
   parser.add_argument(
-    '--plugin_suffix', type=str, default='Worker'
+    '--worker_suffix', type=str, default='Worker'
   )
 
   parser.add_argument(
@@ -87,9 +87,9 @@ if __name__ == '__main__':
   config_endpoint = args.config_endpoint
   port = args.port
   execution_path = args.execution_path
-  plugins_location = args.plugins_location
-  plugin_name = args.plugin_name
-  plugin_suffix = args.plugin_suffix
+  workers_location = args.workers_location
+  worker_name = args.worker_name
+  worker_suffix = args.worker_suffix
   nr_workers = args.nr_workers
   use_tf = args.use_tf
 
@@ -103,9 +103,9 @@ if __name__ == '__main__':
 
   svr = FlaskModelServer(
     log=log,
-    plugins_location=plugins_location,
-    plugin_name=plugin_name,
-    plugin_suffix=plugin_suffix,
+    workers_location=workers_location,
+    worker_name=worker_name,
+    worker_suffix=worker_suffix,
     port=port,
     config_endpoint=config_endpoint,
     execution_path=execution_path,
