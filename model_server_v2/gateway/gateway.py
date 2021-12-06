@@ -35,7 +35,7 @@ from libraries import LummetryObject
 from libraries.logger_mixins.serialization_json_mixin import NPJson
 from libraries.model_server_v2.request_utils import get_api_request_body
 
-__VER__ = '0.1.2.0'
+__VER__ = '0.1.2.2'
 
 class FlaskGateway(LummetryObject):
 
@@ -236,9 +236,21 @@ class FlaskGateway(LummetryObject):
         verbosity=1
       )
       self._current_server_port += 1
+    #endfor
 
-      if self._paths is None:
-        self._get_paths_from_server(server_name)
+    nr_tries = 0
+    svr = self._start_server_names[0]
+    while True:
+      try:
+        nr_tries += 1
+        self._get_paths_from_server(svr)
+        break
+      except:
+        if nr_tries >= 1000:
+          raise ValueError("Could not get paths from server {}".format(svr))
+        sleep(1)
+      #end try-except
+    #endwhile
 
     return
 
