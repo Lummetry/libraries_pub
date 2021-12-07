@@ -85,6 +85,7 @@ if __name__ == '__main__':
   base_folder = args.base_folder
   app_folder = args.app_folder
   config_endpoint = args.config_endpoint
+  host = args.host
   port = args.port
   execution_path = args.execution_path
   workers_location = args.workers_location
@@ -106,6 +107,7 @@ if __name__ == '__main__':
     workers_location=workers_location,
     worker_name=worker_name,
     worker_suffix=worker_suffix,
+    host=host,
     port=port,
     config_endpoint=config_endpoint,
     execution_path=execution_path,

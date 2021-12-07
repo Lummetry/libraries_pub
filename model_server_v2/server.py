@@ -32,7 +32,7 @@ from libraries.logger_mixins.serialization_json_mixin import NPJson
 
 from libraries.model_server_v2.request_utils import get_api_request_body
 
-__VER__ = '0.1.2.0'
+__VER__ = '0.1.2.1'
 
 class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
@@ -118,11 +118,6 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
   def startup(self):
     super().startup()
     self._log_banner()
-    if 'NR_WORKERS' in self._config_endpoint:
-      self.__initial_nr_workers = self._config_endpoint.pop('NR_WORKERS')
-    else:
-      self.P("WARNING: 'NR_WORKERS' not provided in endpoint configuration", color='r')
-    #endif
     self._update_nr_workers(self.__initial_nr_workers)
 
     if not self._execution_path.startswith('/'):

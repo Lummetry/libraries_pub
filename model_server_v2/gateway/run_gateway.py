@@ -41,7 +41,7 @@ if __name__ == '__main__':
   )
 
   parser.add_argument(
-    '--host', type=str, default='127.0.0.1'
+    '--host', type=str, default='0.0.0.0'
   )
 
   parser.add_argument(

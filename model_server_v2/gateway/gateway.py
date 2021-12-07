@@ -33,7 +33,10 @@ from libraries import LummetryObject
 from libraries.logger_mixins.serialization_json_mixin import NPJson
 from libraries.model_server_v2.request_utils import get_api_request_body
 
-__VER__ = '0.1.2.4'
+__VER__ = '0.1.2.5'
+
+DEFAULT_NR_WORKERS = 5
+DEFAULT_HOST = '127.0.0.1'
 
 class FlaskGateway(LummetryObject):
 
@@ -172,7 +175,23 @@ class FlaskGateway(LummetryObject):
     )
     return
 
-  def _start_server(self, server_name, host, port, execution_path, verbosity=1):
+  def _start_server(self, server_name, port, execution_path, host=None, nr_workers=None, verbosity=1):
+    config_endpoint = self._config_endpoints.get(server_name, {})
+
+    if 'HOST' in config_endpoint:
+      host = config_endpoint.pop('HOST')
+    else:
+      host = host or DEFAULT_HOST
+      self.P("WARNING: 'HOST' not provided in endpoint configuration for {}.".format(server_name), color='r')
+    #endif
+
+    if 'NR_WORKERS' in config_endpoint:
+      nr_workers = config_endpoint.pop('NR_WORKERS')
+    else:
+      nr_workers = nr_workers or DEFAULT_NR_WORKERS
+      self.P("WARNING: 'NR_WORKERS' not provided in endpoint configuration for {}.".format(server_name), color='r')
+    #endif
+
     msg = "Creating server {}@{}:{}{}".format(server_name, host, port, execution_path)
     if verbosity >= 1:
       self.P(msg, color='g')
@@ -180,20 +199,23 @@ class FlaskGateway(LummetryObject):
       self._create_notification('log', msg)
     #endif
 
-    process = subprocess.Popen([
+    popen_args = [
       'python',
       'libraries/model_server_v2/run_server.py',
-      '--base_folder',      self.log.root_folder,
-      '--app_folder',       self.log.app_folder,
-      '--config_endpoint',  json.dumps(self._config_endpoints.get(server_name, {})),
-      '--host',             host,
-      '--port',             str(port),
-      '--execution_path',   execution_path,
+      '--base_folder', self.log.root_folder,
+      '--app_folder', self.log.app_folder,
+      '--config_endpoint', json.dumps(config_endpoint),
+      '--host', host,
+      '--port', str(port),
+      '--execution_path', execution_path,
       '--workers_location', self._workers_location,
-      '--worker_name',      server_name,
-      '--worker_suffix',    self._workers_suffix,
+      '--worker_name', server_name,
+      '--worker_suffix', self._workers_suffix,
+      '--nr_workers', str(nr_workers),
       '--use_tf',
-    ])
+    ]
+
+    process = subprocess.Popen(popen_args)
 
     self._servers[server_name] = {
       'PROCESS' : process,
@@ -228,7 +250,6 @@ class FlaskGateway(LummetryObject):
     for i,server_name in enumerate(self._start_server_names):
       self._start_server(
         server_name=server_name,
-        host=self._host,
         port=self._current_server_port,
         execution_path=self._server_execution_path,
         verbosity=1
@@ -305,7 +326,6 @@ class FlaskGateway(LummetryObject):
 
     self._start_server(
       server_name=signature,
-      host=self._host,
       port=self._current_server_port,
       execution_path=self._server_execution_path,
       verbosity=0
