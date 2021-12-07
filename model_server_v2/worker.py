@@ -229,6 +229,6 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
     return answer
 
   def _create_notification(self, notification_type, notification):
-    notification = (self._counter, notification)
+    notification = (self._counter or "INIT", notification)
     super()._create_notification(notification_type=notification_type, notification=notification)
     return
