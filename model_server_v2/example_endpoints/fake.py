@@ -28,9 +28,10 @@ _CONFIG = {
 class FakeWorker(FlaskWorker):
 
   """
-  Example implementation of a worker;
-  - as the worker runs on thread, then no prints are allowed; use `_create_notification` and see all the notifications
-    when calling /notifications of the server.
+  Example implementation of a worker
+
+  Obs: as the worker runs on thread, then no prints are allowed; use `_create_notification` and see all the notifications
+       when calling /notifications of the server.
   """
 
   def __init__(self, **kwargs):
