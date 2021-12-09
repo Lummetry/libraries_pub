@@ -73,3 +73,25 @@ class _MachineMixin(object):
     from psutil import virtual_memory
     total_mem = virtual_memory().total / ((1024**3) if gb else 1)
     return total_mem
+  
+  @staticmethod
+  def get_localhost_ip():
+    """
+    Helps you obtain the localhost ip of the current machine
+
+    Returns
+    -------
+    ip: string indicating the current machine local ip address
+
+    """
+    ip = None
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+      s.connect(('1.2.3.4', 1)) #use dummy ip address
+      ip = s.getsockname()[0]
+    except:
+      ip = '127.0.0.1'
+    finally:
+      s.close()
+    #end try-except-finally
+    return ip
