@@ -33,7 +33,7 @@ from time import time as tm
 from collections import OrderedDict
 from datetime import datetime as dt
 
-__VER__ = '8.0.16.0'
+__VER__ = '8.0.16.1'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"

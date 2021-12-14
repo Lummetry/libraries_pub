@@ -19,7 +19,7 @@ Copyright 2019-2021 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 @description:
 """
 
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from time import time as tm
 
 class _TimersMixin(object):
@@ -36,13 +36,19 @@ class _TimersMixin(object):
     super(_TimersMixin, self).__init__()
     self.timers = None
     self.timer_level = 0
+    self.opened_timers = None
+    self.timers_graph = None
     self._timer_error = False
     return
 
   def reset_timers(self):
     self.timers = OrderedDict()
+    self.timers_graph = OrderedDict()
+    self.opened_timers = deque()
     self.timer_level = 0
     self._timer_error = False
+
+    self.timers_graph["ROOT"] = OrderedDict()
     return
 
   def restart_timer(self, sname):
@@ -59,6 +65,9 @@ class _TimersMixin(object):
       'STOP_COUNT': 0,
     }
 
+    self.timers_graph[sname] = OrderedDict() ## there is no ordered set, so we use OrderedDict with no values
+    return
+
   def start_timer(self, sname):
     if not self.DEBUG:
       return -1
@@ -67,14 +76,26 @@ class _TimersMixin(object):
       self.restart_timer(sname)
 
     curr_time = tm()
+
     self.timers[sname]['START'] = curr_time
     self.timers[sname]['START_COUNT'] += 1
+    if len(self.opened_timers) >= 1:
+      parent = self.opened_timers[-1]
+    else:
+      parent = "ROOT"
+    #endif
+
+    self.timers_graph[parent][sname] = None
     self.timer_level += 1
+    self.opened_timers.append(sname)
+
     if self.timer_level > 100 and not self._timer_error:
       self.P("Something is wrong with timers:", color='r')
       for ft in self.get_faulty_timers():
         self.P("  {}: {}".format(ft, self.timers[ft]), color='r')
       self._timer_error = True
+    #endif
+
     return curr_time
 
   def get_time_until_now(self, sname):
@@ -94,6 +115,7 @@ class _TimersMixin(object):
   def end_timer(self, sname, skip_first_timing=True):
     result = 0
     if self.DEBUG:
+      self.opened_timers.pop()
       self.timer_level -= 1
 
       ctimer = self.timers[sname]
@@ -126,40 +148,102 @@ class _TimersMixin(object):
     self.P("  {} = {:.3f} in {} laps".format(sname, val, cnt))
     return
 
-  def show_timers(self, summary='mean',
-                  title='',
-                  show_levels=True,
-                  show_max=True,
-                  show_current=True,
-                  div=None,
-                  ):
+  def _print_timer(self, key,
+                   summary='mean',
+                   show_levels=True,
+                   show_max=True,
+                   show_current=True,
+                   div=None
+                   ):
+
+    ctimer = self.timers.get(key, None)
+
+    if ctimer is None:
+      return
+
+    mean_time = ctimer['MEAN']
+    max_time = ctimer['MAX']
+    current_time = ctimer['END'] - ctimer['START']
+    if show_levels:
+      s_key = '  ' * ctimer['LEVEL'] + key
+    else:
+      s_key = key
+    msg = None
+    if summary in ['mean', 'avg']:
+      # self.verbose_log(" {} = {:.4f}s (max lap = {:.4f}s)".format(s_key,mean_time,max_time))
+      msg = " {} = {:.4f}s".format(s_key, mean_time)
+    else:
+      # self.verbose_log(" {} = {:.4f}s (max lap = {:.4f}s)".format(s_key,total, max_time))
+      total = mean_time * ctimer['COUNT']
+      msg = " {} = {:.4f}s".format(s_key, total)
+    if show_max:
+      msg += ", max: {:.4f}s".format(max_time)
+    if show_current:
+      msg += ", curr: {:.4f}s".format(current_time)
+    if div is not None:
+      msg += ", itr(B{}): {:.4f}s".format(div, mean_time / div)
+    self.verbose_log(msg)
+    return
+
+  def show_timers_deprecated(self, summary='mean',
+                             title='',
+                             show_levels=True,
+                             show_max=True,
+                             show_current=True,
+                             div=None,
+                             ):
     if self.DEBUG:
       if len(title) > 0:
         title = ' ' + title
       self.verbose_log("Timing results{}:".format(title))
-      for key, ctimer in self.timers.items():
-        mean_time = ctimer['MEAN']
-        max_time = ctimer['MAX']
-        current_time = ctimer['END'] - ctimer['START']
-        if show_levels:
-          s_key = '  ' * ctimer['LEVEL'] + key
-        else:
-          s_key = key
-        msg = None
-        if summary in ['mean', 'avg']:
-          # self.verbose_log(" {} = {:.4f}s (max lap = {:.4f}s)".format(s_key,mean_time,max_time))
-          msg = " {} = {:.4f}s".format(s_key, mean_time)
-        else:
-          # self.verbose_log(" {} = {:.4f}s (max lap = {:.4f}s)".format(s_key,total, max_time))
-          total = mean_time * ctimer['COUNT']
-          msg = " {} = {:.4f}s".format(s_key, total)
-        if show_max:
-          msg += ", max: {:.4f}s".format(max_time)
-        if show_current:
-          msg += ", curr: {:.4f}s".format(current_time)
-        if div is not None:
-          msg += ", itr(B{}): {:.4f}s".format(div, mean_time / div)
-        self.verbose_log(msg)
+      for key in self.timers:
+        self._print_timer(
+          key=key,
+          summary=summary, show_levels=show_levels,
+          show_max=show_max, show_current=show_current,
+          div=div
+        )
+      #endfor
+    else:
+      self.verbose_log("DEBUG not activated!")
+    return
+
+
+  def show_timers(self, summary=None,
+                  title=None,
+                  show_levels=True,
+                  show_max=True,
+                  show_current=True,
+                  div=None):
+
+    if summary is None:
+      summary = 'mean'
+
+    if title is None:
+      title = ''
+
+    def dfs(visited, graph, node):
+      if node not in visited:
+        self._print_timer(
+          key=node,
+          summary=summary,
+          show_levels=show_levels, show_current=show_current,
+          show_max=show_max, div=div
+        )
+        visited.add(node)
+        for neighbour in graph[node].keys():
+          dfs(visited, graph, neighbour)
+        #endfor
+      #endif
+    #enddef
+
+    buffer_visited = set()
+
+    if self.DEBUG:
+      if len(title) > 0:
+        title = ' ' + title
+      self.verbose_log("Timing results{}:".format(title))
+      dfs(buffer_visited, self.timers_graph, "ROOT")
     else:
       self.verbose_log("DEBUG not activated!")
     return
@@ -187,7 +271,3 @@ class _TimersMixin(object):
     tmr = self.get_timer(skey)
     result = tmr.get('COUNT', 0)
     return result
-
-
-
-
