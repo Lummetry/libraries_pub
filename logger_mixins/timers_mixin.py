@@ -21,6 +21,7 @@ Copyright 2019-2021 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 
 from collections import OrderedDict, deque
 from time import time as tm
+import threading
 
 class _TimersMixin(object):
   """
@@ -72,16 +73,16 @@ class _TimersMixin(object):
     return
 
   def start_timer(self, sname):
+    assert threading.current_thread() is threading.main_thread()
+
     if not self.DEBUG:
       return -1
 
     if sname not in self.timers:
       self.restart_timer(sname)
 
-    self._add_in_timers_graph(sname)
-
     curr_time = tm()
-
+    self._add_in_timers_graph(sname)
     self.timers[sname]['START'] = curr_time
     self.timers[sname]['START_COUNT'] += 1
     if len(self.opened_timers) >= 1:
