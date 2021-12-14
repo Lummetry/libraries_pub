@@ -43,12 +43,15 @@ class _TimersMixin(object):
 
   def reset_timers(self):
     self.timers = OrderedDict()
+    self._timer_error = False
+    self.reset_timers_graph()
+    return
+
+  def reset_timers_graph(self):
     self.timers_graph = OrderedDict()
+    self.timers_graph["ROOT"] = OrderedDict()
     self.opened_timers = deque()
     self.timer_level = 0
-    self._timer_error = False
-
-    self.timers_graph["ROOT"] = OrderedDict()
     return
 
   def restart_timer(self, sname):
@@ -59,12 +62,16 @@ class _TimersMixin(object):
       'START': 0,
       'END': 0,
       'PASS': True,
-      'LEVEL': self.timer_level,
+      'LEVEL': 0,
 
       'START_COUNT': 0,
       'STOP_COUNT': 0,
     }
 
+    return
+
+  def _add_in_timers_graph(self, sname):
+    self.timers[sname]['LEVEL'] = self.timer_level
     self.timers_graph[sname] = OrderedDict() ## there is no ordered set, so we use OrderedDict with no values
     return
 
@@ -74,6 +81,8 @@ class _TimersMixin(object):
 
     if sname not in self.timers:
       self.restart_timer(sname)
+
+    self._add_in_timers_graph(sname)
 
     curr_time = tm()
 
@@ -89,7 +98,7 @@ class _TimersMixin(object):
     self.timer_level += 1
     self.opened_timers.append(sname)
 
-    if self.timer_level > 100 and not self._timer_error:
+    if self.timer_level >= 10 and not self._timer_error:
       self.P("Something is wrong with timers:", color='r')
       for ft in self.get_faulty_timers():
         self.P("  {}: {}".format(ft, self.timers[ft]), color='r')
@@ -184,30 +193,6 @@ class _TimersMixin(object):
       msg += ", itr(B{}): {:.4f}s".format(div, mean_time / div)
     self.verbose_log(msg)
     return
-
-  def show_timers_deprecated(self, summary='mean',
-                             title='',
-                             show_levels=True,
-                             show_max=True,
-                             show_current=True,
-                             div=None,
-                             ):
-    if self.DEBUG:
-      if len(title) > 0:
-        title = ' ' + title
-      self.verbose_log("Timing results{}:".format(title))
-      for key in self.timers:
-        self._print_timer(
-          key=key,
-          summary=summary, show_levels=show_levels,
-          show_max=show_max, show_current=show_current,
-          div=div
-        )
-      #endfor
-    else:
-      self.verbose_log("DEBUG not activated!")
-    return
-
 
   def show_timers(self, summary=None,
                   title=None,
