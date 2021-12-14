@@ -212,7 +212,8 @@ class _TimersMixin(object):
           show_max=show_max, div=div
         )
         visited.add(node)
-        for neighbour in graph[node].keys():
+        keys = list(graph[node].keys())
+        for neighbour in keys:
           dfs(visited, graph, neighbour)
         #endfor
       #endif
