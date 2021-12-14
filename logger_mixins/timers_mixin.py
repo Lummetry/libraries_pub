@@ -44,10 +44,6 @@ class _TimersMixin(object):
   def reset_timers(self):
     self.timers = OrderedDict()
     self._timer_error = False
-    self.reset_timers_graph()
-    return
-
-  def reset_timers_graph(self):
     self.timers_graph = OrderedDict()
     self.timers_graph["ROOT"] = OrderedDict()
     self.opened_timers = deque()
