@@ -32,8 +32,9 @@ import socket
 from time import time as tm
 from collections import OrderedDict
 from datetime import datetime as dt
+from pathlib import Path
 
-__VER__ = '8.0.16.3'
+__VER__ = '8.0.16.4'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -955,3 +956,57 @@ class BaseLogger(object):
     self.MACHINE_NAME = socket.gethostname()
     self.COMPUTER_NAME = self.MACHINE_NAME
     return self.MACHINE_NAME
+
+
+  def _link(self, src_path, target_subpath, is_dir, target=None):
+    """
+    Creates a symbolic link.
+
+    Parameters:
+    ----------
+    src_path: str, mandatory
+      Symlink src full path
+
+    target_subpath: str, mandatory
+      Subpath in the target directory of the logger
+
+    is_dir: bool, mandatory
+      Whether is directory or file
+
+    target: str, optional
+      Target directory of the logger (data, models, output or logs)
+      The default is None ('data')
+    """
+    if target is None:
+      target = 'data'
+
+    if not os.path.exists(src_path):
+      self.verbose_log("ERROR! Could not create symlink, because '{}' does not exist".format(src_path))
+      return
+
+    target_path = self.get_target_folder(target)
+    if target_path is None:
+      return
+
+    target_path = os.path.join(target_path, target_subpath)
+    if os.path.exists(target_path):
+      return
+
+    target_path_parent = Path(target_path).parent
+    if not os.path.exists(target_path_parent):
+      os.makedirs(target_path_parent)
+
+    os.symlink(
+      src_path, target_path,
+      target_is_directory=is_dir
+    )
+
+    return
+
+  def link_file(self, src_path, target_subpath, target=None):
+    self._link(src_path, target_subpath, is_dir=False, target=target)
+    return
+
+  def link_folder(self, src_path, target_subpath, target=None):
+    self._link(src_path, target_subpath, is_dir=True, target=target)
+    return
