@@ -1,5 +1,5 @@
 """
-Copyright 2019-2021 Lummetry.AI (Knowledge Investment Group SRL). All Rights Reserved.
+Copyright 2019-2022 Lummetry.AI (Knowledge Investment Group SRL). All Rights Reserved.
 
 
 * NOTICE:  All information contained herein is, and remains
