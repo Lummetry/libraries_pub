@@ -205,23 +205,14 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
     answer: dict
       The answer that goes to the end-user
     """
-    self.start_timer('execute')
     self._counter = counter
     self.__encountered_error = None
 
-    self.start_timer('pre_process')
     prep_inputs = self.__pre_process(inputs)
-    self.end_timer('pre_process')
 
-    self.start_timer('predict')
     pred = self.__predict(prep_inputs)
-    self.end_timer('predict')
 
-    self.start_timer('post_process')
     answer = self.__post_process(pred)
-    self.end_timer('post_process')
-
-    self.end_timer('execute')
 
     if self.__encountered_error:
       answer = {'ERROR' : self.__encountered_error}
