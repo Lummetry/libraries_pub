@@ -22,8 +22,8 @@ from copy import deepcopy
 
 class _PluginMergeDefaultAndUpstreamConfigs(object):
 
-  def __init__(self):
-    super().__init__()
+  def __init__(self, **kwargs):
+    super(_PluginMergeDefaultAndUpstreamConfigs, self).__init__(**kwargs)
     return
 
   def _merge_prepare_config(self, default_config=None, delta_config=None):

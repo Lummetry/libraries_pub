@@ -85,6 +85,10 @@ class _JSONSerializationMixin(object):
         self.verbose_log("  File not found!", color='r')
     return
 
+  @staticmethod
+  def safe_dumps_json(dct, **kwargs):
+    return json.dumps(dct, cls=NPJson, **kwargs)
+
   def load_dict(self, **kwargs):
     return self.load_json(**kwargs)
 
