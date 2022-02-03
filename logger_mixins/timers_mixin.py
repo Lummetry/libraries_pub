@@ -51,8 +51,9 @@ class _TimersMixin(object):
     self.timer_level = 0
     return
 
-  def restart_timer(self, sname):
-    self.timers[sname] = {
+  @staticmethod
+  def get_empty_timer():
+    return {
       'MEAN': 0,
       'MAX': 0,
       'COUNT': 0,
@@ -65,6 +66,8 @@ class _TimersMixin(object):
       'STOP_COUNT': 0,
     }
 
+  def restart_timer(self, sname):
+    self.timers[sname] = self.get_empty_timer()
     return
 
   def _add_in_timers_graph(self, sname):
