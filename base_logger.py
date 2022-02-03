@@ -529,6 +529,7 @@ class BaseLogger(object):
         return
 
     data_files = list(filter(lambda x: os.path.isfile(os.path.join(check_dir, x)), os.listdir(check_dir)))
+    data_files = list(filter(lambda x: any(ext in x for ext in ['.txt', 'json']), data_files))
 
     for f in data_files:
       if any(x in f for x in ['config', 'cfg', 'conf']):
