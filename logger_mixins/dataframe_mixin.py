@@ -131,7 +131,8 @@ class _DataFrameMixin(object):
                      also_markdown=False,
                      to_data=None,
                      full_path=None,
-                     subfolder_path=None
+                     subfolder_path=None,
+                     verbose=True
                      ):
     """
      df: dataframe
@@ -182,8 +183,12 @@ class _DataFrameMixin(object):
       out_file = fn
       save_path, file_name = os.path.split(out_file)
 
-    self.P("Saving (mode='{}') {:<20} [{}] ..{}".format(
-      mode, file_name, df.shape, save_path[-30:]))
+    if verbose:
+      self.P("Saving (mode='{}') {:<20} [{}] ..{}".format(
+        mode, file_name, df.shape, save_path[-30:])
+      )
+    #endif
+
     if compress:
       df.to_pickle(out_file)
     else:
