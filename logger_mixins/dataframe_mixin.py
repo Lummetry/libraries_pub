@@ -170,6 +170,8 @@ class _DataFrameMixin(object):
 
     if subfolder_path is not None:
       lfld = os.path.join(lfld, subfolder_path.lstrip('/'))
+      if not os.path.exists(lfld):
+        os.makedirs(lfld)
 
     if lfld is not None:
       file_prefix = '' if not show_prefix else self.file_prefix + "_"
