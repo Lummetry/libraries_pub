@@ -100,6 +100,7 @@ class _PickleSerializationMixin(object):
       datafolder = lfld
       if subfolder_path is not None:
         datafolder = os.path.join(datafolder, subfolder_path.lstrip('/'))
+        os.makedirs(datafolder, exist_ok=True)
       datafile = os.path.join(datafolder, fn)
 
     if compressed or '.pklz' in fn:

@@ -51,26 +51,26 @@ class _JSONSerializationMixin(object):
     super(_JSONSerializationMixin, self).__init__()
     return
 
-  def load_json(self, fn, folder=None, numeric_keys=True, verbose=True, subfolder_path=None):
+  def load_json(self, fname, folder=None, numeric_keys=True, verbose=True, subfolder_path=None):
     assert folder in [None, 'data', 'output', 'models']
     lfld = self.get_target_folder(target=folder)
 
     if folder is not None:
       if subfolder_path is not None:
-        datafile = os.path.join(lfld, subfolder_path.lstrip('/'), fn)
+        datafile = os.path.join(lfld, subfolder_path.lstrip('/'), fname)
         if verbose:
-          self.verbose_log("Loading json '{}' from '{}'/'{}'".format(fn, folder, subfolder_path))
+          self.verbose_log("Loading json '{}' from '{}'/'{}'".format(fname, folder, subfolder_path))
         #endif
       else:
-        datafile = os.path.join(lfld, fn)
+        datafile = os.path.join(lfld, fname)
         if verbose:
-          self.verbose_log("Loading json '{}' from '{}'".format(fn, folder))
+          self.verbose_log("Loading json '{}' from '{}'".format(fname, folder))
         #endif
       #endif
     else:
-      datafile = fn
+      datafile = fname
       if verbose:
-        self.verbose_log("Loading json '{}'".format(fn))
+        self.verbose_log("Loading json '{}'".format(fname))
     #endif
 
     if os.path.isfile(datafile):
@@ -99,8 +99,8 @@ class _JSONSerializationMixin(object):
     save_dir = self._data_dir
     if subfolder_path is not None:
       save_dir = os.path.join(save_dir, subfolder_path.lstrip('/'))
-    if not os.path.exists(save_dir):
-      os.makedirs(save_dir)
+      os.makedirs(save_dir, exist_ok=True)
+
     datafile = os.path.join(save_dir, fname)
     if verbose:
       self.verbose_log('Saving data json: {}'.format(datafile))
@@ -115,8 +115,8 @@ class _JSONSerializationMixin(object):
     save_dir = self._outp_dir
     if subfolder_path is not None:
       save_dir = os.path.join(save_dir, subfolder_path.lstrip('/'))
-    if not os.path.exists(save_dir):
-      os.makedirs(save_dir)
+      os.makedirs(save_dir, exist_ok=True)
+
     datafile = os.path.join(save_dir, fname)
     if verbose:
       self.verbose_log('Saving output json: {}'.format(datafile))
@@ -131,8 +131,8 @@ class _JSONSerializationMixin(object):
     save_dir = self._modl_dir
     if subfolder_path is not None:
       save_dir = os.path.join(save_dir, subfolder_path.lstrip('/'))
-    if not os.path.exists(save_dir):
-      os.makedirs(save_dir)
+      os.makedirs(save_dir, exist_ok=True)
+
     datafile = os.path.join(save_dir, fname)
     if verbose:
       self.verbose_log('Saving models json: {}'.format(datafile))
