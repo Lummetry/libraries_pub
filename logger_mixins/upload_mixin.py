@@ -41,7 +41,9 @@ class _UploadMixin(object):
                      target_path,
                      timeout=900,
                      chunk_size=4 * 1024 * 1024,
-                     url_type='temporary'):
+                     url_type='temporary',
+                     progress_fn=None,
+                     ):
 
     """
     Uploads in the folder specific to a dropbox application.
@@ -76,18 +78,24 @@ class _UploadMixin(object):
 
     url_type : str
       Type of url to be generated after the file is uploaded: temporary or shared
-
+    
+    progress_fn: callback
+      Will be used to report the current progress percent
+    
     Returns
     -------
       A downloadable link of the uploaded file
 
     """
-
+    def _progress(total_size, uploaded_size):
+      return round(uploaded_size / total_size * 100, 2)
+    
     assert url_type in ['temporary', 'shared']
 
     import dropbox
     from tqdm import tqdm
-
+    
+    uploaded_size = 0
     dbx = dropbox.Dropbox(access_token, timeout=timeout)
 
     if chunk_size is None:
@@ -104,6 +112,7 @@ class _UploadMixin(object):
               f.read(chunk_size)
             )
             pbar.update(chunk_size)
+            uploaded_size+= chunk_size
             cursor = dropbox.files.UploadSessionCursor(
               session_id=upload_session_start_result.session_id,
               offset=f.tell(),
@@ -125,6 +134,9 @@ class _UploadMixin(object):
                 cursor.offset = f.tell()
               # endif
               pbar.update(chunk_size)
+              uploaded_size+= chunk_size
+              if progress_fn:
+                progress_fn(_progress(file_size, uploaded_size))
             # end while
           # end while tqdm
         # endif
