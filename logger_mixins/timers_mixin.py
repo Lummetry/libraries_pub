@@ -157,7 +157,7 @@ class _TimersMixin(object):
     self.P("  {} = {:.3f} in {} laps".format(sname, val, cnt))
     return
 
-  def _print_timer(self, key,
+  def _format_timer(self, key,
                    summary='mean',
                    show_levels=True,
                    show_max=True,
@@ -191,10 +191,19 @@ class _TimersMixin(object):
       msg += ", curr: {:.4f}s".format(current_time)
     if div is not None:
       msg += ", itr(B{}): {:.4f}s".format(div, mean_time / div)
-    self.verbose_log(msg)
+    return msg
+
+  def show_timers(self, **kwargs):
+    lst_logs = self.format_timers(**kwargs)
+    for l in lst_logs:
+      self.verbose_log(l)
     return
 
-  def show_timers(self, summary=None,
+  def show_timings(self, **kwargs):
+    self.show_timers(**kwargs)
+    return
+
+  def format_timers(self, summary=None,
                   title=None,
                   show_levels=True,
                   show_max=True,
@@ -207,40 +216,34 @@ class _TimersMixin(object):
     if title is None:
       title = ''
 
-    def dfs(visited, graph, node):
+    def dfs(visited, graph, node, logs):
       if node not in visited:
-        self._print_timer(
+        formatted_node = self._format_timer(
           key=node,
           summary=summary,
           show_levels=show_levels, show_current=show_current,
           show_max=show_max, div=div
         )
+        if formatted_node is not None:
+          logs.append(formatted_node)
         visited.add(node)
         keys = list(graph[node].keys())
         for neighbour in keys:
-          dfs(visited, graph, neighbour)
+          dfs(visited, graph, neighbour, logs)
         #endfor
       #endif
     #enddef
 
     buffer_visited = set()
-
+    lst_logs = []
     if self.DEBUG:
       if len(title) > 0:
         title = ' ' + title
-      self.verbose_log("Timing results{}:".format(title))
-      dfs(buffer_visited, self.timers_graph, "ROOT")
+      lst_logs.append("Timing results{}:".format(title))
+      dfs(buffer_visited, self.timers_graph, "ROOT", lst_logs)
     else:
       self.verbose_log("DEBUG not activated!")
-    return
-
-  def get_stats(self):
-    self.show_timers()
-    return
-
-  def show_timings(self):
-    self.show_timers()
-    return
+    return lst_logs
 
   def get_timing_dict(self, skey):
     return self.timers[skey] if skey in self.timers else {}
