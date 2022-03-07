@@ -21,7 +21,7 @@ jobs:
             repository: Lummetry/libraries
             token: ${{ secrets.ACTIONS_TOKEN }}
             path: ./private
-            ref: develop
+            ref: main
 
         - name: Copy files to the private repo
           run: |
