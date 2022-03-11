@@ -651,6 +651,13 @@ class BaseLogger(object):
     if os.path.isdir(_path):
       return _path
     return None
+  
+  def get_output_subfolder(self, _dir):
+    _data = self.get_output_folder()
+    _path = os.path.join(_data, _dir)
+    if os.path.isdir(_path):
+      return _path
+    return None
 
   def get_path_from_node(self, dct):
     if 'PARENT' in dct:
