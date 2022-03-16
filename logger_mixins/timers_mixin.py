@@ -20,8 +20,11 @@ Copyright 2019-2022 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 """
 
 from collections import OrderedDict, deque
-from time import time as tm
+from time import perf_counter
 import threading
+
+DEFAULT_SECTION = 'main'
+DEFAULT_THRESHOLD_NO_SHOW = 0
 
 class _TimersMixin(object):
   """
@@ -36,19 +39,45 @@ class _TimersMixin(object):
   def __init__(self):
     super(_TimersMixin, self).__init__()
     self.timers = None
-    self.timer_level = 0
+    self.timer_level = None
     self.opened_timers = None
     self.timers_graph = None
-    self._timer_error = False
+    self._timer_error = None
+
+    self.reset_timers()
+    return
+
+  # def reset_timers(self):
+  #   self.timers = OrderedDict()
+  #   self._timer_error = False
+  #   self.timers_graph = OrderedDict()
+  #   self.timers_graph["ROOT"] = OrderedDict()
+  #   self.opened_timers = deque()
+  #   self.timer_level = 0
+  #   return
+
+  def _maybe_create_timers_section(self, section=None):
+    section = section or DEFAULT_SECTION
+
+    if section in self.timers:
+      return
+
+    self.timers[section] = OrderedDict()
+    self.timer_level[section] = 0
+    self.opened_timers[section] = deque()
+    self.timers_graph[section] = OrderedDict()
+    self.timers_graph[section]["ROOT"] = OrderedDict()
+    self._timer_error[section] = False
     return
 
   def reset_timers(self):
-    self.timers = OrderedDict()
-    self._timer_error = False
-    self.timers_graph = OrderedDict()
-    self.timers_graph["ROOT"] = OrderedDict()
-    self.opened_timers = deque()
-    self.timer_level = 0
+    self.timers = {}
+    self.timer_level = {}
+    self.opened_timers = {}
+    self.timers_graph = {}
+    self._timer_error = {}
+
+    self._maybe_create_timers_section()
     return
 
   @staticmethod
@@ -66,70 +95,87 @@ class _TimersMixin(object):
       'STOP_COUNT': 0,
     }
 
-  def restart_timer(self, sname):
-    self.timers[sname] = self.get_empty_timer()
+  def restart_timer(self, sname, section=None):
+    section = section or DEFAULT_SECTION
+    self.timers[section][sname] = self.get_empty_timer()
     return
 
-  def _add_in_timers_graph(self, sname):
-    self.timers[sname]['LEVEL'] = self.timer_level
-    self.timers_graph[sname] = OrderedDict() ## there is no ordered set, so we use OrderedDict with no values
+  def _add_in_timers_graph(self, sname, section=None):
+    section = section or DEFAULT_SECTION
+    self.timers[section][sname]['LEVEL'] = self.timer_level[section]
+    self.timers_graph[section][sname] = OrderedDict() ## there is no ordered set, so we use OrderedDict with no values
     return
 
-  def start_timer(self, sname):
-    assert threading.current_thread() is threading.main_thread()
+  def start_timer(self, sname, section=None):
+    section = section or DEFAULT_SECTION
+    if section == DEFAULT_SECTION:
+      assert threading.current_thread() is threading.main_thread()
+
+    self._maybe_create_timers_section(section)
 
     if not self.DEBUG:
       return -1
 
-    if sname not in self.timers:
-      self.restart_timer(sname)
+    if sname not in self.timers[section]:
+      self.restart_timer(sname, section)
 
-    curr_time = tm()
-    self._add_in_timers_graph(sname)
-    self.timers[sname]['START'] = curr_time
-    self.timers[sname]['START_COUNT'] += 1
-    if len(self.opened_timers) >= 1:
-      parent = self.opened_timers[-1]
+    curr_time = perf_counter()
+    self._add_in_timers_graph(sname, section=section)
+    self.timers[section][sname]['START'] = curr_time
+    self.timers[section][sname]['START_COUNT'] += 1
+    if len(self.opened_timers[section]) >= 1:
+      parent = self.opened_timers[section][-1]
     else:
       parent = "ROOT"
     #endif
 
-    self.timers_graph[parent][sname] = None
-    self.timer_level += 1
-    self.opened_timers.append(sname)
+    self.timers_graph[section][parent][sname] = None
+    self.timer_level[section] += 1
+    self.opened_timers[section].append(sname)
 
-    if self.timer_level >= 10 and not self._timer_error:
+    if self.timer_level[section] >= 10 and not self._timer_error[section]:
       self.P("Something is wrong with timers:", color='r')
-      for ft in self.get_faulty_timers():
-        self.P("  {}: {}".format(ft, self.timers[ft]), color='r')
-      self._timer_error = True
+      for ft in self._get_section_faulty_timers(section):
+        self.P("  {}: {}".format(ft, self.timers[section][ft]), color='r')
+      self._timer_error[section] = True
     #endif
 
     return curr_time
 
-  def get_time_until_now(self, sname):
-    ctimer = self.timers[sname]
-    return tm() - ctimer['START']
+  def get_time_until_now(self, sname, section=None):
+    section = section or DEFAULT_SECTION
+    ctimer = self.timers[section][sname]
+    return perf_counter() - ctimer['START']
 
   def get_faulty_timers(self):
+    dct_faulty = {}
+    for section in self.timers:
+      dct_faulty[section] = self._get_section_faulty_timers(section)
+    return dct_faulty
+
+  def _get_section_faulty_timers(self, section=None):
+    section = section or DEFAULT_SECTION
     lst_faulty = []
-    for tmr_name, tmr in self.timers.items():
+    for tmr_name, tmr in self.timers[section].items():
       if (tmr['START_COUNT'] - tmr['STOP_COUNT']) > 1:
         lst_faulty.append(tmr_name)
     return lst_faulty
 
-  def end_timer_no_skip(self, sname):
-    return self.end_timer(sname, skip_first_timing=False)
+  def end_timer_no_skip(self, sname, section=None):
+    return self.end_timer(sname, skip_first_timing=False, section=section)
 
-  def end_timer(self, sname, skip_first_timing=True):
+  def end_timer(self, sname, skip_first_timing=True, section=None):
+    section = section or DEFAULT_SECTION
+    if sname not in self.timers[section]:
+      return
     result = 0
     if self.DEBUG:
-      self.opened_timers.pop()
-      self.timer_level -= 1
+      self.opened_timers[section].pop()
+      self.timer_level[section] -= 1
 
-      ctimer = self.timers[sname]
+      ctimer = self.timers[section][sname]
       ctimer['STOP_COUNT'] += 1
-      ctimer['END'] = tm()
+      ctimer['END'] = perf_counter()
       result = ctimer['END'] - ctimer['START']
       _count = ctimer['COUNT']
       _prev_avg = ctimer['MEAN']
@@ -147,30 +193,38 @@ class _TimersMixin(object):
       ctimer['MEAN'] = avg
     return result
 
-  def stop_timer(self, sname, skip_first_timing=True):
-    return self.end_timer(sname=sname, skip_first_timing=skip_first_timing)
+  def stop_timer(self, sname, skip_first_timing=True, section=None):
+    return self.end_timer(sname=sname, skip_first_timing=skip_first_timing, section=section)
 
-  def show_timer_total(self, sname):
-    ctimer = self.timers[sname]
+  def show_timer_total(self, sname, section=None):
+    section = section or DEFAULT_SECTION
+    ctimer = self.timers[section][sname]
     cnt = ctimer['COUNT']
     val = ctimer['MEAN'] * cnt
     self.P("  {} = {:.3f} in {} laps".format(sname, val, cnt))
     return
 
-  def _format_timer(self, key,
+  def _format_timer(self, key, section,
                    summary='mean',
                    show_levels=True,
                    show_max=True,
                    show_current=True,
-                   div=None
+                   div=None,
+                   threshold_no_show=None
                    ):
 
-    ctimer = self.timers.get(key, None)
+    if threshold_no_show is None:
+      threshold_no_show = DEFAULT_THRESHOLD_NO_SHOW
+
+    ctimer = self.timers[section].get(key, None)
 
     if ctimer is None:
       return
 
     mean_time = ctimer['MEAN']
+    if mean_time < threshold_no_show:
+      return
+
     max_time = ctimer['MAX']
     current_time = ctimer['END'] - ctimer['START']
     if show_levels:
@@ -208,7 +262,11 @@ class _TimersMixin(object):
                   show_levels=True,
                   show_max=True,
                   show_current=True,
-                  div=None):
+                  div=None,
+                  threshold_no_show=None):
+
+    if threshold_no_show is None:
+      threshold_no_show = DEFAULT_THRESHOLD_NO_SHOW
 
     if summary is None:
       summary = 'mean'
@@ -216,47 +274,58 @@ class _TimersMixin(object):
     if title is None:
       title = ''
 
-    def dfs(visited, graph, node, logs):
+    def dfs(visited, graph, node, logs, sect):
       if node not in visited:
         formatted_node = self._format_timer(
           key=node,
+          section=sect,
           summary=summary,
           show_levels=show_levels, show_current=show_current,
-          show_max=show_max, div=div
+          show_max=show_max, div=div,
+          threshold_no_show=threshold_no_show
         )
         if formatted_node is not None:
           logs.append(formatted_node)
         visited.add(node)
         keys = list(graph[node].keys())
         for neighbour in keys:
-          dfs(visited, graph, neighbour, logs)
+          dfs(visited, graph, neighbour, logs, sect)
         #endfor
       #endif
     #enddef
 
-    buffer_visited = set()
     lst_logs = []
     if self.DEBUG:
       if len(title) > 0:
         title = ' ' + title
-      lst_logs.append("Timing results{}:".format(title))
-      dfs(buffer_visited, self.timers_graph, "ROOT", lst_logs)
+      header = "Timing results{}:".format(title)
+      if threshold_no_show > 0:
+        header += " # discarding entries with time < {}".format(threshold_no_show)
+      lst_logs.append(header)
+
+      for section in self.timers:
+        lst_logs.append("Section '{}'".format(section))
+        buffer_visited = set()
+        dfs(buffer_visited, self.timers_graph[section], "ROOT", lst_logs, section)
     else:
       self.verbose_log("DEBUG not activated!")
     return lst_logs
 
-  def get_timing_dict(self, skey):
-    return self.timers[skey] if skey in self.timers else {}
+  def get_timing_dict(self, skey, section=None):
+    section = section or DEFAULT_SECTION
+    timers_section = self.timers.get(section, {})
+    dct = timers_section.get(skey, {})
+    return dct
 
-  def get_timer(self, skey):
-    return self.get_timing_dict(skey)
+  def get_timer(self, skey, section=None):
+    return self.get_timing_dict(skey, section=section)
 
-  def get_timer_mean(self, skey):
-    tmr = self.get_timer(skey)
+  def get_timer_mean(self, skey, section=None):
+    tmr = self.get_timer(skey, section=section)
     result = tmr.get('MEAN', 0)
     return result
 
-  def get_timer_count(self, skey):
-    tmr = self.get_timer(skey)
+  def get_timer_count(self, skey, section=None):
+    tmr = self.get_timer(skey, section=section)
     result = tmr.get('COUNT', 0)
     return result

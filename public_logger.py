@@ -92,8 +92,6 @@ class Logger(
       data_folder_additional_configs=data_folder_additional_configs
     )
 
-    self.reset_timers()
-
     self.verbose_log('  Avail/Total RAM: {:.1f} GB / {:.1f} GB'.format(
       self.get_avail_memory(), self.get_machine_memory()
     ), color='green')
