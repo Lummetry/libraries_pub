@@ -47,15 +47,6 @@ class _TimersMixin(object):
     self.reset_timers()
     return
 
-  # def reset_timers(self):
-  #   self.timers = OrderedDict()
-  #   self._timer_error = False
-  #   self.timers_graph = OrderedDict()
-  #   self.timers_graph["ROOT"] = OrderedDict()
-  #   self.opened_timers = deque()
-  #   self.timer_level = 0
-  #   return
-
   def _maybe_create_timers_section(self, section=None):
     section = section or DEFAULT_SECTION
 
