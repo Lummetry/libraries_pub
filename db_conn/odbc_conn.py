@@ -38,6 +38,14 @@ class ODBCConnector(BaseConnector):
     self._cnxn = pyodbc.connect(str_conn)
     return
 
+  def check_connection(self):
+    try:
+      cursor = self._cnxn.cursor()
+      cursor.execute("SELECT 1")
+    except pyodbc.Error as e:
+      return False
+    return True
+
   def _create_reader(self, **kwargs):
     table_data = kwargs.get('table_data', '')
     chunksize = kwargs.get('chunksize', None)
@@ -52,6 +60,8 @@ class ODBCConnector(BaseConnector):
       chunksize=chunksize
      )
     return reader
+
+
 
 
 if __name__ == '__main__':
