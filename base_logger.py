@@ -28,13 +28,14 @@ import textwrap
 import numpy as np
 import traceback
 import socket
+import threading
 
 from time import time as tm
 from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '8.0.18.0'
+__VER__ = '8.0.18.1'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -1018,3 +1019,7 @@ class BaseLogger(object):
   def link_folder(self, src_path, target_subpath, target=None):
     self._link(src_path, target_subpath, is_dir=True, target=target)
     return
+
+  @property
+  def is_main_thread(self):
+    return threading.current_thread() is threading.main_thread()

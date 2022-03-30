@@ -117,10 +117,12 @@ class LummetryObject(object):
     return
 
 
-  def P(self, s, t=False, color=None, prefix=False):    
+  def P(self, s, t=False, color=None, prefix=False):
+    if not self.log.is_main_thread:
+      return
+
     if self.show_prefixes or prefix:
-      _r = self.log.P("[{}]: {}".format(
-                self.__name__,s),show_time=t, color=color)
+      _r = self.log.P("[{}]: {}".format(self.__name__,s), show_time=t, color=color)
     else:
       if self.prefix_log is None:
         _r = self.log.P("{}".format(s),show_time=t, color=color)
@@ -130,11 +132,13 @@ class LummetryObject(object):
         
   
   def D(self, s, t=False):
+    if not self.log.is_main_thread:
+      return
+
     _r = -1
     if self.DEBUG:
       if self.show_prefixes:
-        _r = self.log.P("[DEBUG] {}: {}".format(
-                        self.__name__,s),show_time=t, color='yellow')
+        _r = self.log.P("[DEBUG] {}: {}".format(self.__name__,s),show_time=t, color='yellow')
       else:
         if self.prefix_log is None:
           _r = self.log.P("[D] {}".format(s),show_time=t, color='yellow')      

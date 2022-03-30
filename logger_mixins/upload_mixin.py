@@ -87,6 +87,9 @@ class _UploadMixin(object):
       A downloadable link of the uploaded file
 
     """
+
+    #TODO make it thread safe - remove tqdm and print only when the main thread calls the method
+
     def _progress(total_size, uploaded_size):
       return round(uploaded_size / total_size * 100, 2)
     

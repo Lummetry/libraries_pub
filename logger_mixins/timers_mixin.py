@@ -100,7 +100,7 @@ class _TimersMixin(object):
   def start_timer(self, sname, section=None):
     section = section or DEFAULT_SECTION
     if section == DEFAULT_SECTION:
-      assert threading.current_thread() is threading.main_thread()
+      assert self.is_main_thread
 
     self._maybe_create_timers_section(section)
 
