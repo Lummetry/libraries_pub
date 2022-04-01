@@ -117,7 +117,7 @@ class _HistogramMixin(object):
                      figsize=None, dpi=None, bins=None,
                      logscale=False, xticks=None, rotation_xticks=None, title=None,
                      xlabel=None, ylabel=None, save_img_path=None,
-                     close_fig=False, save_fig_pickle=False,
+                     close_fig=False, save_fig_pickle=False, xlim=None, ylim=None,
                      vline=None):
     """
     Plots a distribution or multiple distributions (list of ndarrays or lists)
@@ -163,6 +163,10 @@ class _HistogramMixin(object):
       axs[i].set_title(label, fontsize=20)
       if xticks is not None:
         axs[i].set_xticks(xticks[i])
+      if xlim is not None:
+        axs[i].set_xlim(xlim)
+      if ylim is not None:
+        axs[i].set_ylim(ylim)
       if logscale:
         axs[i].set_yscale('log')
       # if rotation_xticks is not None:
