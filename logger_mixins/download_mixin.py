@@ -66,6 +66,7 @@ class _DownloadMixin(object):
                      target='models',
                      print_progress=True,
                      publish_func=None,
+                     publish_only_value=False,
                      verbose=True,
                      unzip=False):
     """
@@ -154,7 +155,10 @@ class _DownloadMixin(object):
       pct_complete = min(1.0, pct_complete)
 
       if publish_func is not None:
-        publish_func("progress:{:.1%}".format(pct_complete))
+        if publish_only_value:
+          publish_func(round(pct_complete*100, 2))
+        else:
+          publish_func("progress:{:.1%}".format(pct_complete))
 
       if print_progress:
         # Status-message. Note the \r which means the line should overwrite itself.
