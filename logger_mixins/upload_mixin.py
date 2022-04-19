@@ -43,6 +43,7 @@ class _UploadMixin(object):
                      chunk_size=4 * 1024 * 1024,
                      url_type='temporary',
                      progress_fn=None,
+                     verbose=1,
                      ):
 
     """
@@ -81,6 +82,10 @@ class _UploadMixin(object):
     
     progress_fn: callback
       Will be used to report the current progress percent
+
+    verbose: int, optional
+      Verbosity level
+      Default value 1
     
     Returns
     -------
@@ -90,13 +95,12 @@ class _UploadMixin(object):
 
     #TODO make it thread safe - remove tqdm and print only when the main thread calls the method
 
-    def _progress(total_size, uploaded_size):
-      return round(uploaded_size / total_size * 100, 2)
+    def _progress(crt, total):
+      return min(100.0, 100.0 * crt / total)
     
     assert url_type in ['temporary', 'shared']
 
     import dropbox
-    from tqdm import tqdm
     
     uploaded_size = 0
     dbx = dropbox.Dropbox(access_token, timeout=timeout)
@@ -110,38 +114,37 @@ class _UploadMixin(object):
         if file_size <= chunk_size:
           print(dbx.files_upload(f.read(), target_path))
         else:
-          with tqdm(total=file_size, desc="Uploaded") as pbar:
-            upload_session_start_result = dbx.files_upload_session_start(
-              f.read(chunk_size)
-            )
-            pbar.update(chunk_size)
-            uploaded_size+= chunk_size
-            cursor = dropbox.files.UploadSessionCursor(
-              session_id=upload_session_start_result.session_id,
-              offset=f.tell(),
-            )
-            commit = dropbox.files.CommitInfo(path=target_path)
-            while f.tell() < file_size:
-              if (file_size - f.tell()) <= chunk_size:
-                print(
-                  dbx.files_upload_session_finish(
-                    f.read(chunk_size), cursor, commit
-                  )
-                )
-              else:
-                dbx.files_upload_session_append(
-                  f.read(chunk_size),
-                  cursor.session_id,
-                  cursor.offset,
-                )
-                cursor.offset = f.tell()
-              # endif
-              pbar.update(chunk_size)
-              uploaded_size+= chunk_size
-              if progress_fn:
-                progress_fn(_progress(file_size, uploaded_size))
-            # end while
-          # end while tqdm
+          upload_session_start_result = dbx.files_upload_session_start(
+            f.read(chunk_size)
+          )
+          uploaded_size += chunk_size
+          cursor = dropbox.files.UploadSessionCursor(
+            session_id=upload_session_start_result.session_id,
+            offset=f.tell(),
+          )
+          commit = dropbox.files.CommitInfo(path=target_path)
+          while f.tell() < file_size:
+            if (file_size - f.tell()) <= chunk_size:
+              dbx.files_upload_session_finish(
+                f.read(chunk_size), cursor, commit
+              )
+            else:
+              dbx.files_upload_session_append(
+                f.read(chunk_size),
+                cursor.session_id,
+                cursor.offset,
+              )
+              cursor.offset = f.tell()
+            # endif
+            # pbar.update(chunk_size)
+            uploaded_size += chunk_size
+            progress_prc = _progress(uploaded_size, file_size)
+            if verbose >= 1:
+              print('\r[...{}] Uploaded {:.2f}%'.format(file_path[-50:], progress_prc), flush=True, end='')
+
+            if progress_fn:
+              progress_fn(progress_prc)
+          # end while
         # endif
       # endwith
     # endif
