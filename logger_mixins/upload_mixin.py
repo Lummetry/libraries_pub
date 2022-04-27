@@ -35,8 +35,8 @@ class _UploadMixin(object):
     super(_UploadMixin, self).__init__()
     return
 
-  @staticmethod
-  def dropbox_upload(access_token,
+  def dropbox_upload(self,
+                     access_token,
                      file_path,
                      target_path,
                      timeout=900,
@@ -112,7 +112,7 @@ class _UploadMixin(object):
       with open(file_path, "rb") as f:
         file_size = os.path.getsize(file_path)
         if file_size <= chunk_size:
-          print(dbx.files_upload(f.read(), target_path))
+          dbx.files_upload(f.read(), target_path)
         else:
           upload_session_start_result = dbx.files_upload_session_start(
             f.read(chunk_size)
@@ -139,7 +139,7 @@ class _UploadMixin(object):
             # pbar.update(chunk_size)
             uploaded_size += chunk_size
             progress_prc = _progress(uploaded_size, file_size)
-            if verbose >= 1:
+            if verbose >= 1 and self.is_main_thread:
               print('\r[...{}] Uploaded {:.2f}%'.format(file_path[-50:], progress_prc), flush=True, end='')
 
             if progress_fn:

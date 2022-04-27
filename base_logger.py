@@ -35,7 +35,7 @@ from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '8.0.18.1'
+__VER__ = '8.0.18.2'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -122,6 +122,10 @@ class BaseLogger(object):
       self.P('  WARNING: Debug is NOT enabled in Logger, some functionalities are DISABLED', color='r')
 
     return
+
+  @property
+  def session_id(self):
+    return self.file_prefix
 
   def _logger(self, logstr, show=True, results=False, noprefix=False, show_time=False, color=None):
     """

@@ -21,7 +21,6 @@ Copyright 2019-2022 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 
 from collections import OrderedDict, deque
 from time import perf_counter
-import threading
 
 DEFAULT_SECTION = 'main'
 DEFAULT_THRESHOLD_NO_SHOW = 0
