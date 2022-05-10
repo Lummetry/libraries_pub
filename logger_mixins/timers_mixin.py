@@ -56,7 +56,7 @@ class _TimersMixin(object):
     self.timer_level[section] = 0
     self.opened_timers[section] = deque()
     self.timers_graph[section] = OrderedDict()
-    self.timers_graph[section]["ROOT"] = OrderedDict()
+    self.timers_graph[section]["ROOT"] = {"SLOW" : OrderedDict(), "FAST" : OrderedDict()}
     self._timer_error[section] = False
     return
 
@@ -93,7 +93,10 @@ class _TimersMixin(object):
   def _add_in_timers_graph(self, sname, section=None):
     section = section or DEFAULT_SECTION
     self.timers[section][sname]['LEVEL'] = self.timer_level[section]
-    self.timers_graph[section][sname] = OrderedDict() ## there is no ordered set, so we use OrderedDict with no values
+    if sname not in self.timers_graph[section]:
+      self.timers_graph[section][sname] = {"SLOW" : OrderedDict(), "FAST" : OrderedDict()}
+
+    self.timers_graph[section][sname]["FAST"] = OrderedDict() ## there is no ordered set, so we use OrderedDict with no values
     return
 
   def start_timer(self, sname, section=None):
@@ -119,7 +122,9 @@ class _TimersMixin(object):
       parent = "ROOT"
     #endif
 
-    self.timers_graph[section][parent][sname] = None
+    self.timers_graph[section][parent]["FAST"][sname] = None
+    self.timers_graph[section][parent]["SLOW"][sname] = None
+
     self.timer_level[section] += 1
     self.opened_timers[section].append(sname)
 
@@ -194,13 +199,13 @@ class _TimersMixin(object):
     self.P("  {} = {:.3f} in {} laps".format(sname, val, cnt))
     return
 
-  def _format_timer(self, key, section,
+  def _format_timer(self, key, section, was_recently_seen,
                    summary='mean',
                    show_levels=True,
                    show_max=True,
                    show_current=True,
                    div=None,
-                   threshold_no_show=None
+                   threshold_no_show=None,
                    ):
 
     if threshold_no_show is None:
@@ -217,6 +222,10 @@ class _TimersMixin(object):
 
     max_time = ctimer['MAX']
     current_time = ctimer['END'] - ctimer['START']
+
+    if not was_recently_seen:
+      key = '[' + key + ']'
+
     if show_levels:
       s_key = '  ' * ctimer['LEVEL'] + key
     else:
@@ -264,11 +273,12 @@ class _TimersMixin(object):
     if title is None:
       title = ''
 
-    def dfs(visited, graph, node, logs, sect):
+    def dfs(visited, graph, node, was_recently_seen, logs, sect):
       if node not in visited:
         formatted_node = self._format_timer(
           key=node,
           section=sect,
+          was_recently_seen=was_recently_seen,
           summary=summary,
           show_levels=show_levels, show_current=show_current,
           show_max=show_max, div=div,
@@ -277,9 +287,11 @@ class _TimersMixin(object):
         if formatted_node is not None:
           logs.append(formatted_node)
         visited.add(node)
-        keys = list(graph[node].keys())
-        for neighbour in keys:
-          dfs(visited, graph, neighbour, logs, sect)
+        slow_keys = list(graph[node]["SLOW"].keys())
+        fast_keys = list(graph[node]["FAST"].keys())
+        for neighbour in slow_keys:
+          recently_seen = neighbour in fast_keys
+          dfs(visited, graph, neighbour, recently_seen, logs, sect)
         #endfor
       #endif
     #enddef
@@ -296,7 +308,7 @@ class _TimersMixin(object):
       for section in self.timers:
         lst_logs.append("Section '{}'".format(section))
         buffer_visited = set()
-        dfs(buffer_visited, self.timers_graph[section], "ROOT", lst_logs, section)
+        dfs(buffer_visited, self.timers_graph[section], "ROOT", True, lst_logs, section)
     else:
       self.verbose_log("DEBUG not activated!")
     return lst_logs
