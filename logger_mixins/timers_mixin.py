@@ -203,7 +203,7 @@ class _TimersMixin(object):
                    summary='mean',
                    show_levels=True,
                    show_max=True,
-                   show_current=True,
+                   show_last=True,
                    div=None,
                    threshold_no_show=None,
                    ):
@@ -240,8 +240,8 @@ class _TimersMixin(object):
       msg = " {} = {:.4f}s".format(s_key, total)
     if show_max:
       msg += ", max: {:.4f}s".format(max_time)
-    if show_current:
-      msg += ", curr: {:.4f}s".format(current_time)
+    if show_last:
+      msg += ", last: {:.4f}s".format(current_time)
     if div is not None:
       msg += ", itr(B{}): {:.4f}s".format(div, mean_time / div)
     return msg
@@ -260,7 +260,7 @@ class _TimersMixin(object):
                   title=None,
                   show_levels=True,
                   show_max=True,
-                  show_current=True,
+                  show_last=True,
                   div=None,
                   threshold_no_show=None):
 
@@ -280,7 +280,7 @@ class _TimersMixin(object):
           section=sect,
           was_recently_seen=was_recently_seen,
           summary=summary,
-          show_levels=show_levels, show_current=show_current,
+          show_levels=show_levels, show_last=show_last,
           show_max=show_max, div=div,
           threshold_no_show=threshold_no_show
         )
