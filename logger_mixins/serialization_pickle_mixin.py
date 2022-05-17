@@ -211,7 +211,7 @@ class _PickleSerializationMixin(object):
     if verbose:
       P = self.P
     else:
-      P = lambda x, color: x
+      P = lambda x, color=None: x
 
     lfld = self.get_target_folder(target=folder)
 
