@@ -118,9 +118,10 @@ class _GPUMixin(object):
         device_props.total_memory / 1024 ** (2 if mb else 3), 
         2
         )
+      mem_total = None
       mem_allocated = None
       gpu_used = None
-      gpu_temp = None
+      gpu_temp = None 
       gpu_temp_max = None
       if pynvml_avail and nvsmires is not None and 'gpu' in nvsmires:
         dct_gpu = nvsmires['gpu'][device_id]
@@ -157,7 +158,9 @@ class _GPUMixin(object):
           self._done_first_smi_error = True
       # end try
       dct_device['ALLOCATED_MEM'] = mem_allocated
-      dct_device['FREE_MEM'] = round(mem_total - mem_allocated,2)
+      dct_device['FREE_MEM'] = 'N/A'
+      if all(x is not None for x in [mem_total, mem_allocated]):
+        dct_device['FREE_MEM'] = round(mem_total - mem_allocated,2)
       dct_device['MEM_UNIT'] = 'MB' if mb else 'GB'
       dct_device['GPU_USED'] = gpu_used
       dct_device['GPU_TEMP'] = gpu_temp
