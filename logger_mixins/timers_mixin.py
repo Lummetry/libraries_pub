@@ -204,6 +204,7 @@ class _TimersMixin(object):
                    show_levels=True,
                    show_max=True,
                    show_last=True,
+                   show_count=True,
                    div=None,
                    threshold_no_show=None,
                    ):
@@ -217,6 +218,7 @@ class _TimersMixin(object):
       return
 
     mean_time = ctimer['MEAN']
+    count = ctimer['COUNT']
     if mean_time < threshold_no_show:
       return
 
@@ -236,12 +238,14 @@ class _TimersMixin(object):
       msg = " {} = {:.4f}s".format(s_key, mean_time)
     else:
       # self.verbose_log(" {} = {:.4f}s (max lap = {:.4f}s)".format(s_key,total, max_time))
-      total = mean_time * ctimer['COUNT']
+      total = mean_time * count
       msg = " {} = {:.4f}s".format(s_key, total)
     if show_max:
       msg += ", max: {:.4f}s".format(max_time)
     if show_last:
       msg += ", last: {:.4f}s".format(current_time)
+    if show_count:
+      msg += ", cnt: {}".format(count)
     if div is not None:
       msg += ", itr(B{}): {:.4f}s".format(div, mean_time / div)
     return msg
@@ -261,6 +265,7 @@ class _TimersMixin(object):
                   show_levels=True,
                   show_max=True,
                   show_last=True,
+                  show_count=True,
                   div=None,
                   threshold_no_show=None):
 
@@ -281,7 +286,7 @@ class _TimersMixin(object):
           was_recently_seen=was_recently_seen,
           summary=summary,
           show_levels=show_levels, show_last=show_last,
-          show_max=show_max, div=div,
+          show_max=show_max, show_count=show_count, div=div,
           threshold_no_show=threshold_no_show
         )
         if formatted_node is not None:
