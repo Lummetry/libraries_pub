@@ -158,7 +158,7 @@ class _GPUMixin(object):
           self._done_first_smi_error = True
       # end try
       dct_device['ALLOCATED_MEM'] = mem_allocated
-      dct_device['FREE_MEM'] = 'N/A'
+      dct_device['FREE_MEM'] = -1
       if all(x is not None for x in [mem_total, mem_allocated]):
         dct_device['FREE_MEM'] = round(mem_total - mem_allocated,2)
       dct_device['MEM_UNIT'] = 'MB' if mb else 'GB'
