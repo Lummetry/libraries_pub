@@ -35,6 +35,55 @@ class _UploadMixin(object):
     super(_UploadMixin, self).__init__()
     return
   
+  
+  def minio_get_dowload_url(self,
+                            endpoint,
+                            access_key, 
+                            secret_key, 
+                            bucket_name, 
+                            object_name,
+                            ):
+    """
+    Retreives a 7 day url for a particular bucket/object
+
+    Parameters
+    ----------
+    endpoint : str
+      address of the MinIO server.
+    access_key : str
+      user.
+    secret_key : str
+      password.
+    bucket_name : str
+      preconfigureg bucket name.
+    object_name : str
+      the existing Minio object name 
+
+    Returns
+    -------
+     URL
+
+    """
+    from minio import Minio    
+    
+    try:
+      client = Minio(
+          endpoint=endpoint,
+          access_key=access_key,
+          secret_key=secret_key,
+          secure=False,
+          )
+
+      url = client.presigned_get_object(
+        bucket_name=bucket_name, 
+        object_name=object_name,
+        )          
+    except Exception as e:
+      self.P(str(e), color='error')
+      return None
+    
+    return url     
+  
   def minio_upload(self,
                    file_path, 
                    endpoint, 
@@ -44,6 +93,7 @@ class _UploadMixin(object):
                    object_name=None,
                    days_retention=None,
                    debug=False,
+                   return_object_name=False,
                    ):       
     """
     
@@ -70,7 +120,9 @@ class _UploadMixin(object):
 
     Returns
     -------
-      Returns URL of the downloadable file or None in case o exception
+      Tuple(URL, Object_name) if return_object_name=True or just URL
+      Returns URL of the downloadable file as well as the object name (or None in case o exception)
+      Object_name can be further used with
 
     """            
     from minio import Minio
@@ -104,7 +156,7 @@ class _UploadMixin(object):
         object_name=object_name,
         retention=retention,
         )
-      
+      object_name = result.object_name
       url = client.presigned_get_object(
         bucket_name=result.bucket_name, 
         object_name=result.object_name,
@@ -115,7 +167,7 @@ class _UploadMixin(object):
       self.P(str(e), color='error')
       return None
     
-    return url                   
+    return url, object_name if return_object_name else url             
 
   def dropbox_upload(self,
                      access_token,
