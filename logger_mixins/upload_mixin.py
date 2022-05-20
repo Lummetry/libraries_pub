@@ -166,8 +166,11 @@ class _UploadMixin(object):
     except Exception as e:
       self.P(str(e), color='error')
       return None
-    
-    return url, object_name if return_object_name else url             
+    res = url
+    if return_object_name:
+      res = url, object_name
+
+    return res
 
   def dropbox_upload(self,
                      access_token,
