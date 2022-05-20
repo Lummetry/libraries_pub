@@ -92,7 +92,7 @@ class _UploadMixin(object):
           )
       
       retention = None
-      if days_retention is None:
+      if days_retention is not None:
         date = dttm.utcnow().replace(
           hour=0, minute=0, second=0, microsecond=0,
           ) + tdelta(days=days_retention)
