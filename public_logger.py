@@ -76,7 +76,7 @@ class Logger(
                HTML=False,
                DEBUG=True,
                data_folder_additional_configs=None,
-               TF_KERAS=True):
+               TF_KERAS=False):
 
     super(Logger, self).__init__(
       lib_name=lib_name, lib_ver=lib_ver,
