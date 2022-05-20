@@ -34,6 +34,88 @@ class _UploadMixin(object):
   def __init__(self):
     super(_UploadMixin, self).__init__()
     return
+  
+  def minio_upload(self,
+                   file_path, 
+                   endpoint, 
+                   access_key, 
+                   secret_key, 
+                   bucket_name, 
+                   object_name=None,
+                   days_retention=None,
+                   debug=False,
+                   ):       
+    """
+    
+
+    Parameters
+    ----------
+    file_path : str
+      relative or full path to file.
+    endpoint : str
+      address of the MinIO server.
+    access_key : str
+      user.
+    secret_key : str
+      password.
+    bucket_name : str
+      preconfigureg bucket name.
+    object_name : str, optional
+      a object name - can be None and will be auto-generated. The default is None.
+    days_retention : int, optional
+      how many days before auto-delete. The default is None.
+    debug : bool, optional
+      The default is False.
+
+
+    Returns
+    -------
+      Returns URL of the downloadable file or None in case o exception
+
+    """            
+    from minio import Minio
+    from minio.commonconfig import GOVERNANCE
+    from minio.retention import  Retention 
+    from datetime import datetime as dttm
+    from datetime import timedelta as tdelta
+    from uuid import uuid4
+    
+    if object_name is None:
+      object_name = "OBJ_"+ str(uuid4()).upper().replace('-','')
+    
+    try:
+      client = Minio(
+          endpoint=endpoint,
+          access_key=access_key,
+          secret_key=secret_key,
+          secure=False,
+          )
+      
+      retention = None
+      if days_retention is None:
+        date = dttm.utcnow().replace(
+          hour=0, minute=0, second=0, microsecond=0,
+          ) + tdelta(days=days_retention)
+        retention = Retention(GOVERNANCE, date)
+          
+      result = client.fput_object(
+        file_path=file_path,
+        bucket_name=bucket_name,
+        object_name=object_name,
+        retention=retention,
+        )
+      
+      url = client.presigned_get_object(
+        bucket_name=result.bucket_name, 
+        object_name=result.object_name,
+        )
+      
+      self.P("Uploaded '{}' as '{}'".format(file_path, url), color='y')
+    except Exception as e:
+      self.P(str(e), color='error')
+      return None
+    
+    return url                   
 
   def dropbox_upload(self,
                      access_token,
