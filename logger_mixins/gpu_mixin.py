@@ -99,6 +99,7 @@ class _GPUMixin(object):
     nvsmires = None
     try:
       from pynvml.smi import nvidia_smi
+      import pynvml
       nvsmi = nvidia_smi.getInstance()
       nvsmires = nvsmi.DeviceQuery('memory.free, memory.total, memory.used, utilization.gpu, temperature.gpu')
       pynvml_avail = True
@@ -138,6 +139,16 @@ class _GPUMixin(object):
           gpu_used = -1
         gpu_temp = dct_gpu['temperature']['gpu_temp']
         gpu_temp_max = dct_gpu['temperature']['gpu_temp_max_threshold']
+
+        handle = pynvml.nvmlDeviceGetHandleByIndex(device_id)
+        processes = []
+        for proc in pynvml.nvmlDeviceGetComputeRunningProcesses(handle):
+          processes.append({
+            'PID' : proc.pid,
+            'ALLOCATED_MEM' : round(proc.usedGpuMemory / (1024*1024 if mb else 1024*1024*1024), 2)
+          })
+        #endfor
+        dct_device['PROCESSES'] = processes
       else:
         str_os = platform.platform()
         ## check if platform is Tegra and record
