@@ -128,6 +128,9 @@ class BaseLogger(object):
     """
     log processing method
     """
+    if not self.is_main_thread:
+      return
+
     elapsed = tm() - self.last_time
 
     self._add_log(
