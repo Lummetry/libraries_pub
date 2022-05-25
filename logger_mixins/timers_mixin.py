@@ -102,7 +102,7 @@ class _TimersMixin(object):
   def start_timer(self, sname, section=None):
     section = section or DEFAULT_SECTION
     if section == DEFAULT_SECTION:
-      assert self.is_main_thread
+      assert self.is_main_thread, "Attempted to run threaded timer '{}' without section".format(sname)
 
     self._maybe_create_timers_section(section)
 

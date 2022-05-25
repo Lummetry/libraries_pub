@@ -35,7 +35,7 @@ from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '8.0.18.5'
+__VER__ = '8.1.0.0'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -93,14 +93,11 @@ class BaseLogger(object):
 
     self.last_time = tm()
     self.app_log = list()
-    self.results = list()
-    self.printed = list()
     self.split_part = 1
     self.config_data = None
     self.MACHINE_NAME = None
     self.COMPUTER_NAME = None
     _ = self.get_machine_name()
-    self.log_results_file = self.file_prefix + "_RESULTS.txt"
 
     self._configure_data_and_dirs(config_file, config_file_encoding)
     self._generate_log_path()
@@ -127,14 +124,14 @@ class BaseLogger(object):
   def session_id(self):
     return self.file_prefix
 
-  def _logger(self, logstr, show=True, results=False, noprefix=False, show_time=False, color=None):
+  def _logger(self, logstr, show=True, noprefix=False, show_time=False, color=None):
     """
     log processing method
     """
     elapsed = tm() - self.last_time
 
     self._add_log(
-      logstr, show=show, results=results,
+      logstr, show=show,
       noprefix=noprefix,
       show_time=show_time,
       color=color
@@ -193,7 +190,7 @@ class BaseLogger(object):
     # endfor
     return
 
-  def _add_log(self, logstr, show=True, results=False, noprefix=False, show_time=False, color=None):
+  def _add_log(self, logstr, show=True, noprefix=False, show_time=False, color=None):
     if type(logstr) != str:
       logstr = str(logstr)
     if logstr == "":
@@ -230,12 +227,7 @@ class BaseLogger(object):
           logstr = _color_start + logstr + _color_end
 
       print("\r" + logstr, flush=True)
-      self.printed.append(True)
-    else:
-      self.printed.append(False)
-    if results:
-      self.results.append(res_log)
-      self.save_results()
+    #endif
     return
 
   def _save_log(self, DEBUG_ERRORS=False):
@@ -284,28 +276,28 @@ class BaseLogger(object):
       self._save_log()
     return
 
-  def verbose_log(self, str_msg, results=False, show_time=False, noprefix=False, color=None):
+  def verbose_log(self, str_msg, show_time=False, noprefix=False, color=None):
     return self._logger(
       str_msg,
       show=True,
-      results=results, show_time=show_time,
+      show_time=show_time,
       noprefix=noprefix, color=color
     )
 
-  def P(self, str_msg, results=False, show_time=False, noprefix=False, color=None):
-    return self.p(str_msg, results, show_time, noprefix, color=color)
+  def P(self, str_msg, show_time=False, noprefix=False, color=None):
+    return self.p(str_msg, show_time=show_time, noprefix=noprefix, color=color)
 
   @staticmethod
-  def Pr(str_msg, results=False, show_time=False, noprefix=False):
+  def Pr(str_msg, show_time=False, noprefix=False):
     if type(str_msg) != str:
       str_msg = str(str_msg)
     print("\r" + str_msg, flush=True, end='')
 
-  def p(self, str_msg, results=False, show_time=False, noprefix=False, color=None):
+  def p(self, str_msg, show_time=False, noprefix=False, color=None):
     return self._logger(
       str_msg,
       show=True,
-      results=results, show_time=show_time,
+      show_time=show_time,
       noprefix=noprefix, color=color
     )
 
@@ -324,7 +316,6 @@ class BaseLogger(object):
       self._add_log(
         logstr=s,
         show=False,
-        results=False,
         noprefix=False,
         show_time=False,
       )
@@ -348,7 +339,6 @@ class BaseLogger(object):
       self._add_log(
         logstr=s,
         show=False,
-        results=False,
         noprefix=False,
         show_time=False,
       )
@@ -363,37 +353,11 @@ class BaseLogger(object):
     if type(str_text) != str:
       str_text = str(str_text)
     str_final = str_msg + "\n" + textwrap.indent(str_text, n * " ")
-    self._logger(str_final, show=True, results=False, show_time=False)
+    self._logger(str_final, show=True, show_time=False)
     return
 
-  def log(self, str_msg, show=False, results=False, show_time=False, color=None):
-    return self._logger(str_msg, show=show, results=results, show_time=show_time, color=color)
-
-  def save_results(self, fn='_results.txt', save_in_logs=True):
-    if save_in_logs:
-      fn_full = os.path.join(self._logs_dir, fn)
-    else:
-      fn_full = fn
-    nowtime = dt.now()
-    strnowtime = nowtime.strftime("[{}][%Y-%m-%d %H:%M:%S] ".format(self.__lib__))
-    stage = 0
-    try:
-      log_output = codecs.open(fn_full, "w", "utf-8")
-      stage += 1
-      for log_item in self.results:
-        log_output.write("{}\n".format(log_item))
-        stage += 1
-      log_output.close()
-      stage += 1
-    except:
-      print(strnowtime + "ResLogWErr S: {} [{}]".format(stage,
-                                                        sys.exc_info()[0]), flush=True)
-    return
-
-  def show_results(self):
-    for res in self.results:
-      self._logger(res, show=True, noprefix=True)
-    return
+  def log(self, str_msg, show=False, show_time=False, color=None):
+    return self._logger(str_msg, show=show, show_time=show_time, color=color)
 
   def _generate_log_path(self):
     if self.no_folders_no_save:
@@ -413,7 +377,6 @@ class BaseLogger(object):
     with open(file_path, 'w') as fp:
       json.dump(path_dict, fp, sort_keys=True, indent=4)
     self._add_log("{} log changed to {}...".format(file_path, self.log_file))
-    self.log_results_file = os.path.join(self._logs_dir, self.log_results_file)
     return
 
   def _get_cloud_base_folder(self, base_folder):
@@ -759,14 +722,6 @@ class BaseLogger(object):
   def get_folders(path):
     lst = [os.path.join(path, x) for x in os.listdir(path)]
     return [x for x in lst if os.path.isdir(x)]
-
-  def show_not_printed(self):
-    nr_log = len(self.app_log)
-    for i in range(nr_log):
-      if not self.printed[i]:
-        print(self.app_log[i], flush=True)
-        self.printed[i] = True
-    return
 
   @staticmethod
   def expand_tilda(path):

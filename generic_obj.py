@@ -23,8 +23,7 @@ Copyright 2019 Lummetry.AI (Knowledge Investment Group SRL). All Rights Reserved
 
 from libraries import Logger
 from collections import deque
-
-__VER__ = '0.2.0.2'
+from datetime import datetime as dt
 
 class LummetryObject(object):
   """
@@ -55,20 +54,19 @@ class LummetryObject(object):
       raise ValueError("Loggger object is invalid: {}".format(log))
       
     self.log = log
-    self._base_object_ver = __VER__
     self.show_prefixes = show_prefixes
     self.prefix_log = prefix_log
     self.config_data = self.log.config_data
     self.DEBUG = DEBUG
 
     self._messages = deque(maxlen=maxlen_notifications)
+    self._thread_logs = deque(maxlen=20)
 
     if not hasattr(self, '__name__'):
       self.__name__ = self.__class__.__name__
     self.startup()
 
     return
-  
 
   def _parse_config_data(self, *args, **kwargs):
     """
@@ -116,45 +114,53 @@ class LummetryObject(object):
           self.__class__.__name__, var_name), color='r')
     return
 
-
   def P(self, s, t=False, color=None, prefix=False):
-    if not self.log.is_main_thread:
-      return
-
     if self.show_prefixes or prefix:
-      _r = self.log.P("[{}]: {}".format(self.__name__,s), show_time=t, color=color)
+      msg = "[{}]: {}".format(self.__name__, s)
     else:
       if self.prefix_log is None:
-        _r = self.log.P("{}".format(s),show_time=t, color=color)
+        msg = "{}".format(s)
       else:
-        _r = self.log.P("{} {}".format(self.prefix_log, s), show_time=t, color=color)
-    return _r
-        
-  
-  def D(self, s, t=False):
-    if not self.log.is_main_thread:
-      return
+        msg = "{} {}".format(self.prefix_log, s)
 
+    _r = -1
+    if self.log.is_main_thread:
+      _r = self.log.P(msg, show_time=t, color=color)
+    else:
+      str_dt_now = dt.now().strftime("%Y-%m-%d %H:%M:%S")
+      msg = '[{}] {}'.format(str_dt_now, msg)
+      self._thread_logs.append({'str_msg' : msg, 'show_time' : t, 'color' : color})
+    return _r
+
+  def D(self, s, t=False):
     _r = -1
     if self.DEBUG:
       if self.show_prefixes:
-        _r = self.log.P("[DEBUG] {}: {}".format(self.__name__,s),show_time=t, color='yellow')
+        msg = "[DEBUG] {}: {}".format(self.__name__,s)
       else:
         if self.prefix_log is None:
-          _r = self.log.P("[D] {}".format(s),show_time=t, color='yellow')      
+          msg = "[D] {}".format(s)
         else:
-          _r = self.log.P("[D]{} {}".format(self.prefix_log, s), show_time=t, color='yellow')
+          msg = "[D]{} {}".format(self.prefix_log, s)
+        #endif
+      #endif
+      if self.log.is_main_thread:
+        _r = self.log.P(msg, show_time = t, color = 'yellow')
+      else:
+        str_dt_now = dt.now().strftime("%Y-%m-%d %H:%M:%S")
+        msg = '[{}] {}'.format(str_dt_now, msg)
+        self._thread_logs.append({'str_msg' : msg, 'show_time' : t, 'color' : 'yellow'})
     return _r
-  
-  
-  def start_timer(self, tmr_id):    
+
+  def start_timer(self, tmr_id):
     return self.log.start_timer(sname=self.__name__ + '_' + tmr_id)
 
   def end_timer(self, tmr_id, skip_first_timing=True):
-    return self.log.end_timer(sname=self.__name__ + '_' + tmr_id,
-                              skip_first_timing=skip_first_timing)
+    return self.log.end_timer(
+      sname=self.__name__ + '_' + tmr_id,
+      skip_first_timing=skip_first_timing
+    )
 
-  
   def raise_error(self, error_text):
     """
     logs the error and raises it
@@ -189,14 +195,10 @@ class LummetryObject(object):
     while len(self._messages) > 0:
       lst.append(self._messages.popleft())
     return lst
-  
-  
-if __name__ == '__main__':
-  class Test(LummetryObject):
-    def __init__(self, **kwargs):
-      self.sess = 'BlaBla'
-      super().__init__(**kwargs)
 
-      
-    
-  
+  def get_thread_logs(self):
+    lst = []
+    while len(self._thread_logs) > 0:
+      lst.append(self._thread_logs.popleft())
+    return lst
+
