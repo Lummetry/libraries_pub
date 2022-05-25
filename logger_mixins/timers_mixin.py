@@ -128,9 +128,10 @@ class _TimersMixin(object):
     self.timer_level[section] += 1
     self.opened_timers[section].append(sname)
 
-    if self.timer_level[section] >= 10 and not self._timer_error[section]:
-      self.P("Something is wrong with timers:", color='r')
-      for ft in self._get_section_faulty_timers(section):
+    faulty_timers = self._get_section_faulty_timers(section)
+    if len(faulty_timers) > 0 and not self._timer_error[section]:
+      self.P("Something is wrong with the timers in section '{}':".format(section), color='r')
+      for ft in faulty_timers:
         self.P("  {}: {}".format(ft, self.timers[section][ft]), color='r')
       self._timer_error[section] = True
     #endif
