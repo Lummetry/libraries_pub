@@ -311,7 +311,17 @@ class _TimersMixin(object):
         header += " # discarding entries with time < {}".format(threshold_no_show)
       lst_logs.append(header)
 
-      for section in self.timers:
+      ## SORTING sections and keeping the default section the first one ..
+      keys = list(self.timers.keys())
+      add_back_default_section = False
+      if DEFAULT_SECTION in keys:
+        add_back_default_section = True
+        keys.pop(keys.index(DEFAULT_SECTION))
+      keys.sort()
+      if add_back_default_section:
+        keys = [DEFAULT_SECTION] + keys
+
+      for section in keys:
         lst_logs.append("Section '{}'".format(section))
         buffer_visited = set()
         dfs(buffer_visited, self.timers_graph[section], "ROOT", True, lst_logs, section)
