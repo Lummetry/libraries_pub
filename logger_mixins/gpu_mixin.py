@@ -87,16 +87,38 @@ class _GPUMixin(object):
     gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
     return gpu_memory_map
 
-  def gpu_info(self, show=False, mb=False):
+  def gpu_info(self, show=False, mb=False, current_pid=False):
+    """
+    Collects GPU info. Must have torch installed & non-mandatory nvidia-smi
+
+    Parameters
+    ----------
+    show : bool, optional
+      show data as gathered. The default is False.
+    mb : bool, optional
+      collect memory in MB otherwise in GB. The default is False.
+    current_pid: bool, optional
+      return data only for GPUs used by current process or all if current process does
+    not use GPU
+    
+
+    Returns
+    -------
+    lst_inf : list of dicts
+      all GPUs info from CUDA:0 to CUDA:n.
+
+    """
 
     try:
       # first get name
-      import torch as th      
+      import torch as th    
+      import os
     except:
       self.P("ERROR: PyTorch not installed! Please install Pytorch.")
       return None
 
-    nvsmires = None
+    self.start_timer('gpu_info')
+    nvsmires = None    
     try:
       from pynvml.smi import nvidia_smi
       import pynvml
@@ -111,6 +133,8 @@ class _GPUMixin(object):
     n_gpus = th.cuda.device_count()
     if n_gpus > 0:
       th.cuda.empty_cache()
+    current_pid_has_usage = False
+    current_pid_gpus = []
     for device_id in range(n_gpus):
       dct_device = {}
       device_props = th.cuda.get_device_properties(device_id)
@@ -143,12 +167,16 @@ class _GPUMixin(object):
         handle = pynvml.nvmlDeviceGetHandleByIndex(device_id)
         processes = []
         for proc in pynvml.nvmlDeviceGetComputeRunningProcesses(handle):
-          processes.append({
-            'PID' : proc.pid,
-            'ALLOCATED_MEM' : round(proc.usedGpuMemory / (1024*1024 if mb else 1024*1024*1024), 2)
-          })
+          dct_proc_info = {k.upper(): v for k,v in proc.__dict__.items()}
+          used_mem = dct_proc_info['USEDGPUMEMORY']
+          dct_proc_info['ALLOCATED_MEM'] = used_mem / (1 if mb else 1024) if used_mem is not None else 0
+          processes.append(dct_proc_info)
+          if dct_proc_info['PID'] == os.getpid():
+            current_pid_has_usage = True
+            current_pid_gpus.append(device_id)            
         #endfor
         dct_device['PROCESSES'] = processes
+        dct_device['USED_BY_PROCESS'] = device_id in current_pid_gpus
       else:
         str_os = platform.platform()
         ## check if platform is Tegra and record
@@ -184,4 +212,9 @@ class _GPUMixin(object):
       for dct_gpu in lst_inf:
         for k, v in dct_gpu.items():
           self.P("  {:<14} {}".format(k + ':', v), color='y')
-    return lst_inf
+
+    self.stop_timer('gpu_info')
+    if current_pid and current_pid_has_usage:
+      return [lst_inf[x] for x in current_pid_gpus]
+    else:
+      return lst_inf
