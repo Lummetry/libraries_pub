@@ -79,6 +79,8 @@ class BaseLogger(object):
     self.HTML = HTML
     self.DEBUG = DEBUG
     self.log_suffix = lib_name
+    
+    self._serialization_lock = threading.Lock()
 
     self._base_folder = base_folder
     self._app_folder = app_folder

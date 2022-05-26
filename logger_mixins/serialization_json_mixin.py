@@ -51,7 +51,7 @@ class _JSONSerializationMixin(object):
     super(_JSONSerializationMixin, self).__init__()
     return
 
-  def load_json(self, fname, folder=None, numeric_keys=True, verbose=True, subfolder_path=None):
+  def load_json(self, fname, folder=None, numeric_keys=True, verbose=True, subfolder_path=None, locking=False):
     assert folder in [None, 'data', 'output', 'models']
     lfld = self.get_target_folder(target=folder)
 
@@ -74,11 +74,19 @@ class _JSONSerializationMixin(object):
     #endif
 
     if os.path.isfile(datafile):
-      with open(datafile) as f:
-        if not numeric_keys:
-          data = json.load(f)
-        else:
-          data = json.load(f, object_hook=lambda d: {int(k) if k.isnumeric() else k: v for k, v in d.items()})
+      if locking:
+        self._serialization_lock.acquire(blocking=True) 
+      try:
+        with open(datafile) as f:
+          if not numeric_keys:
+            data = json.load(f)
+          else:
+            data = json.load(f, object_hook=lambda d: {int(k) if k.isnumeric() else k: v for k, v in d.items()})
+      except:
+        data = None
+      if locking:
+        self._serialization_lock.release()
+      
       return data
     else:
       if verbose:
@@ -94,8 +102,22 @@ class _JSONSerializationMixin(object):
 
   def load_data_json(self, fname, **kwargs):
     return self.load_json(fname, folder='data', **kwargs)
+  
+  
+  def thread_safe_save(self, datafile, data_json, locking=True):
+    if locking:
+      self._serialization_lock.acquire()
+    try:
+      with open(datafile, 'w') as fp:
+        json.dump(data_json, fp, sort_keys=True, indent=4, cls=NPJson)    
+    except:
+      pass
+    if locking:
+      self._serialization_lock.release()
+    return
 
-  def save_data_json(self, data_json, fname, subfolder_path=None, verbose=True):
+    
+  def save_data_json(self, data_json, fname, subfolder_path=None, verbose=True, locking=False):
     save_dir = self._data_dir
     if subfolder_path is not None:
       save_dir = os.path.join(save_dir, subfolder_path.lstrip('/'))
@@ -104,14 +126,13 @@ class _JSONSerializationMixin(object):
     datafile = os.path.join(save_dir, fname)
     if verbose:
       self.verbose_log('Saving data json: {}'.format(datafile))
-    with open(datafile, 'w') as fp:
-      json.dump(data_json, fp, sort_keys=True, indent=4, cls=NPJson)
+    self.thread_safe_save(datafile=datafile, data_json=data_json, locking=locking)
     return datafile
 
   def load_output_json(self, fname, **kwargs):
     return self.load_json(fname, folder='output', **kwargs)
 
-  def save_output_json(self, data_json, fname, subfolder_path=None, verbose=True):
+  def save_output_json(self, data_json, fname, subfolder_path=None, verbose=True, locking=False):
     save_dir = self._outp_dir
     if subfolder_path is not None:
       save_dir = os.path.join(save_dir, subfolder_path.lstrip('/'))
@@ -120,14 +141,13 @@ class _JSONSerializationMixin(object):
     datafile = os.path.join(save_dir, fname)
     if verbose:
       self.verbose_log('Saving output json: {}'.format(datafile))
-    with open(datafile, 'w') as fp:
-      json.dump(data_json, fp, sort_keys=True, indent=4, cls=NPJson)
+    self.thread_safe_save(datafile=datafile, data_json=data_json, locking=locking)
     return datafile
 
   def load_models_json(self, fname, **kwargs):
     return self.load_json(fname, folder='models', **kwargs)
 
-  def save_models_json(self, data_json, fname, subfolder_path=None, verbose=True):
+  def save_models_json(self, data_json, fname, subfolder_path=None, verbose=True, locking=False):
     save_dir = self._modl_dir
     if subfolder_path is not None:
       save_dir = os.path.join(save_dir, subfolder_path.lstrip('/'))
@@ -136,12 +156,14 @@ class _JSONSerializationMixin(object):
     datafile = os.path.join(save_dir, fname)
     if verbose:
       self.verbose_log('Saving models json: {}'.format(datafile))
-    with open(datafile, 'w') as fp:
-      json.dump(data_json, fp, sort_keys=True, indent=4, cls=NPJson)
+    self.thread_safe_save(datafile=datafile, data_json=data_json, locking=locking)
     return datafile
 
   @staticmethod
   def save_json(dct, fname):
+    """
+    This function is NOT thread safe
+    """
     with open(fname, 'w') as fp:
       json.dump(dct, fp, sort_keys=True, indent=4, cls=NPJson)
     return
@@ -162,6 +184,44 @@ class _JSONSerializationMixin(object):
 
   @staticmethod
   def load_dict_txt(path):
+    """
+    This function is NOT thread safe
+    """
     with open(path) as f:
       data = json.load(f)
     return data
+  
+  
+  def update_data_josn(self,
+                       fname, 
+                       update_callback,
+                       subfolder_path=None, 
+                       verbose=False,
+                       ):
+    assert update_callback is not None, "update_callback must be defined!"
+    self._serialization_lock.acquire(blocking=True)
+    
+    try:
+      data = self.load_data_json(
+        fname=fname,
+        verbose=verbose,
+        subfolder_path=subfolder_path,
+        locking=False,
+        )
+      
+      if data is not None:
+        data = update_callback(data)
+        
+        self.save_data_json(
+          data_json=data, 
+          fname=fname, 
+          verbose=verbose,
+          subfolder_path=subfolder_path,
+          locking=False,
+          )
+    except:
+      pass
+    
+    self._serialization_lock.release()
+    return
+          

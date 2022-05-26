@@ -37,47 +37,54 @@ class _PickleSerializationMixin(object):
     super(_PickleSerializationMixin, self).__init__()
     return
 
-  def _save_compressed_pickle(self, full_filename, myobj):
+  def _save_compressed_pickle(self, full_filename, myobj, locking=False):
     """
     save object to file using pickle
 
     @param full_filename: name of destination file
     @param myobj: object to save (has to be pickleable)
     """
-
+    if locking:
+      self._serialization_lock.acquire(blocking=True) 
     try:
       fhandle = bz2.BZ2File(full_filename, 'wb')
+      pickle.dump(myobj, fhandle, protocol=pickle.HIGHEST_PROTOCOL)
+      fhandle.close()
     except:
       self.P('ERROR: File ' + full_filename + ' cannot be written!')
       return False
-
-    pickle.dump(myobj, fhandle, protocol=pickle.HIGHEST_PROTOCOL)
-    fhandle.close()
+    if locking:
+      self._serialization_lock.release()
     return True
 
 
-  def _load_compressed_pickle(self, full_filename):
+  def _load_compressed_pickle(self, full_filename, locking=False):
     """
     Load from filename using pickle
 
     @param full_filename: name of file to load from
     """
-
+    if locking:
+      self._serialization_lock.acquire(blocking=True) 
     try:
       fhandle = bz2.BZ2File(full_filename, 'rb')
+      myobj = pickle.load(fhandle)
+      fhandle.close()
     except:
       self.P('ERROR: File ' + full_filename + ' cannot be read!')
       return None
+    if locking:
+      self._serialization_lock.release()
 
-    myobj = pickle.load(fhandle)
-    fhandle.close()
     return myobj
 
 
   def save_pickle(self, data, fn, folder=None,
                   use_prefix=False, verbose=True,
                   compressed=False,
-                  subfolder_path=None):
+                  subfolder_path=None,
+                  locking=False,
+                  ):
     """
     compressed: True if compression is required OR you can just add '.pklz' to `fn`
     """
@@ -117,14 +124,21 @@ class _PickleSerializationMixin(object):
         P("Saving uncompressed pickle {} in '{}'".format(fn, folder))
       else:
         P("Saving uncompressed pickle {} in '{}'/'{}'".format(fn, folder, subfolder_path))
-      with open(datafile, 'wb') as fhandle:
-        pickle.dump(data, fhandle, protocol=pickle.HIGHEST_PROTOCOL)
+      if locking:
+        self._serialization_lock.acquire(blocking=True)
+      try:
+        with open(datafile, 'wb') as fhandle:
+          pickle.dump(data, fhandle, protocol=pickle.HIGHEST_PROTOCOL)
+      except:
+        pass
+      if locking:
+        self._serialization_lock.release()
       if verbose:
         P("  Saved pickle '{}' in '{}' folder".format(fn, folder))
     return datafile
 
 
-  def save_pickle_to_data(self, data, fn, compressed=False, verbose=True, subfolder_path=None):
+  def save_pickle_to_data(self, data, fn, compressed=False, verbose=True, subfolder_path=None, locking=False):
     """
     compressed: True if compression is required OR you can just add '.pklz' to `fn`
     """
@@ -133,11 +147,12 @@ class _PickleSerializationMixin(object):
       folder='data',
       compressed=compressed,
       subfolder_path=subfolder_path,
-      verbose=verbose
+      verbose=verbose,
+      locking=locking,
     )
 
 
-  def save_pickle_to_models(self, data, fn, compressed=False, verbose=True, subfolder_path=None):
+  def save_pickle_to_models(self, data, fn, compressed=False, verbose=True, subfolder_path=None, locking=False):
     """
     compressed: True if compression is required OR you can just add '.pklz' to `fn`
     """
@@ -146,11 +161,12 @@ class _PickleSerializationMixin(object):
       folder='models',
       compressed=compressed,
       subfolder_path=subfolder_path,
-      verbose=verbose
+      verbose=verbose,
+      locking=locking,
     )
 
 
-  def save_pickle_to_output(self, data, fn, compressed=False, verbose=True, subfolder_path=None):
+  def save_pickle_to_output(self, data, fn, compressed=False, verbose=True, subfolder_path=None, locking=False):
     """
     compressed: True if compression is required OR you can just add '.pklz' to `fn`
     """
@@ -159,11 +175,12 @@ class _PickleSerializationMixin(object):
       folder='output',
       compressed=compressed,
       subfolder_path=subfolder_path,
-      verbose=verbose
+      verbose=verbose,
+      locking=locking,
     )
 
 
-  def load_pickle_from_models(self, fn, decompress=False, verbose=True, subfolder_path=None):
+  def load_pickle_from_models(self, fn, decompress=False, verbose=True, subfolder_path=None, locking=False):
     """
      decompressed : True if the file was saved with `compressed=True` or you can just use '.pklz'
     """
@@ -172,11 +189,12 @@ class _PickleSerializationMixin(object):
       folder='models',
       decompress=decompress,
       verbose=verbose,
-      subfolder_path=subfolder_path
+      subfolder_path=subfolder_path,
+      locking=locking,
     )
 
 
-  def load_pickle_from_data(self, fn, decompress=False, verbose=True, subfolder_path=None):
+  def load_pickle_from_data(self, fn, decompress=False, verbose=True, subfolder_path=None, locking=False):
     """
      decompressed : True if the file was saved with `compressed=True` or you can just use '.pklz'
     """
@@ -185,11 +203,12 @@ class _PickleSerializationMixin(object):
       folder='data',
       decompress=decompress,
       verbose=verbose,
-      subfolder_path=subfolder_path
+      subfolder_path=subfolder_path,
+      locking=locking,
     )
 
 
-  def load_pickle_from_output(self, fn, decompress=False, verbose=True, subfolder_path=None):
+  def load_pickle_from_output(self, fn, decompress=False, verbose=True, subfolder_path=None, locking=False):
     """
      decompressed : True if the file was saved with `compressed=True` or you can just use '.pklz'
     """
@@ -198,12 +217,13 @@ class _PickleSerializationMixin(object):
       folder='output',
       decompress=decompress,
       verbose=verbose,
-      subfolder_path=subfolder_path
+      subfolder_path=subfolder_path,
+      locking=locking,
     )
 
 
   def load_pickle(self, fn, folder=None, decompress=False, verbose=True,
-                  subfolder_path=None):
+                  subfolder_path=None, locking=False):
     """
      load_from: 'data', 'output', 'models'
      decompressed : True if the file was saved with `compressed=True` or you can just use '.pklz'
@@ -236,8 +256,15 @@ class _PickleSerializationMixin(object):
           P("Loading pickle with decompression...")
         data = self._load_compressed_pickle(datafile)
       else:
-        with open(datafile, "rb") as f:
-          data = pickle.load(f)
+        if locking:
+          self._serialization_lock.acquire(blocking=True)
+        try:
+          with open(datafile, "rb") as f:
+            data = pickle.load(f)
+        except:
+          data = None
+        if locking:
+          self._serialization_lock.release()
       if data is None:
         P("  Pickle load failed!")
       else:
@@ -245,3 +272,35 @@ class _PickleSerializationMixin(object):
     else:
       P("  File not found! Pickle load failed.", color='r')
     return data
+  
+  
+  def update_pickle_from_data(self, fn, update_callback, decompress=False, verbose=False, subfolder_path=None):
+    assert update_callback is not None, "update_callback must be defined!"
+    self._serialization_lock.acquire(blocking=True)
+    
+    try:
+      data = self.load_pickle_from_data(
+        fn=fn,
+        decompress=decompress,
+        verbose=verbose,
+        subfolder_path=subfolder_path,
+        locking=False,
+        )
+      
+      if data is not None:
+        data = update_callback(data)
+        
+        self.save_pickle_to_data(
+          data=data, 
+          fn=fn,
+          compress=decompress,
+          verbose=verbose,
+          subfolder_path=subfolder_path,
+          locking=False,
+          )
+    except:
+      pass
+    
+    self._serialization_lock.release()
+    return
+      
