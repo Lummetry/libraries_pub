@@ -192,7 +192,7 @@ class _JSONSerializationMixin(object):
     return data
   
   
-  def update_data_josn(self,
+  def update_data_json(self,
                        fname, 
                        update_callback,
                        subfolder_path=None, 
