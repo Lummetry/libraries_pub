@@ -35,7 +35,7 @@ from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '8.1.0.1'
+__VER__ = '9.0.0.3'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -52,6 +52,8 @@ COLORS = {
 
   '__end__': "\x1b[0m",
 }
+
+_LOGGER_LOCK_ID = '_logger_print_lock' 
 
 class BaseLogger(object):
 
@@ -80,7 +82,9 @@ class BaseLogger(object):
     self.DEBUG = DEBUG
     self.log_suffix = lib_name
     
-    self._serialization_lock = threading.Lock()
+    self._lock_table = OrderedDict({
+      _LOGGER_LOCK_ID: threading.Lock(),
+      })
 
     self._base_folder = base_folder
     self._app_folder = app_folder
@@ -121,6 +125,38 @@ class BaseLogger(object):
       self.P('  WARNING: Debug is NOT enabled in Logger, some functionalities are DISABLED', color='r')
 
     return
+  
+  def lock_resource(self, str_res):
+    if str_res not in self._lock_table:
+      self._lock_table[str_res] = threading.Lock()
+    self._lock_table[str_res].acquire(blocking=True)
+    return
+  
+  def unlock_resource(self, str_res):
+    if str_res in self._lock_table:
+      self._lock_table[str_res].release()
+    return
+  
+  def lock_logger(self):
+    self.lock_resource(_LOGGER_LOCK_ID)
+    return
+  
+  def unlock_logger(self):
+    self.unlock_resource(_LOGGER_LOCK_ID)
+    
+  def get_file_path(self, fn, folder, subfolder_path=None):
+    lfld = self.get_target_folder(target=folder)
+    if lfld is None:
+      datafile = fn
+    else:
+      datafolder = lfld
+    if subfolder_path is not None:
+      datafolder = os.path.join(datafolder, subfolder_path.lstrip('/'))
+    datafile = os.path.join(datafolder, fn)
+    if os.path.isfile(datafile):
+      return datafile
+    return 
+    
 
   @property
   def session_id(self):
@@ -130,8 +166,10 @@ class BaseLogger(object):
     """
     log processing method
     """
-    if not self.is_main_thread:
-      return
+    self.lock_logger()
+    # now that we have locking in place we no longer need to cancel in-thread logging    
+    # if not self.is_main_thread:
+    #   return
 
     elapsed = tm() - self.last_time
 
@@ -145,6 +183,8 @@ class BaseLogger(object):
     self._save_log()
     self.last_time = tm()
     self._check_log_size()
+    
+    self.unlock_logger()
     return elapsed
 
   def _normalize_path_sep(self):

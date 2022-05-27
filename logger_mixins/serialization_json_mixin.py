@@ -51,7 +51,13 @@ class _JSONSerializationMixin(object):
     super(_JSONSerializationMixin, self).__init__()
     return
 
-  def load_json(self, fname, folder=None, numeric_keys=True, verbose=True, subfolder_path=None, locking=False):
+  def load_json(self, 
+                fname, 
+                folder=None, 
+                numeric_keys=True, 
+                verbose=True, 
+                subfolder_path=None, 
+                locking=True):
     assert folder in [None, 'data', 'output', 'models']
     lfld = self.get_target_folder(target=folder)
 
@@ -75,7 +81,7 @@ class _JSONSerializationMixin(object):
 
     if os.path.isfile(datafile):
       if locking:
-        self._serialization_lock.acquire(blocking=True) 
+        self.lock_resource(datafile) 
       try:
         with open(datafile) as f:
           if not numeric_keys:
@@ -85,7 +91,7 @@ class _JSONSerializationMixin(object):
       except:
         data = None
       if locking:
-        self._serialization_lock.release()
+        self.unlock_resource(datafile)
       
       return data
     else:
@@ -106,18 +112,23 @@ class _JSONSerializationMixin(object):
   
   def thread_safe_save(self, datafile, data_json, locking=True):
     if locking:
-      self._serialization_lock.acquire()
+      self.lock_resource(datafile)
     try:
       with open(datafile, 'w') as fp:
         json.dump(data_json, fp, sort_keys=True, indent=4, cls=NPJson)    
     except:
       pass
     if locking:
-      self._serialization_lock.release()
+      self.unlock_resource(datafile)
     return
 
     
-  def save_data_json(self, data_json, fname, subfolder_path=None, verbose=True, locking=False):
+  def save_data_json(self, 
+                     data_json, 
+                     fname, 
+                     subfolder_path=None, 
+                     verbose=True, 
+                     locking=True):
     save_dir = self._data_dir
     if subfolder_path is not None:
       save_dir = os.path.join(save_dir, subfolder_path.lstrip('/'))
@@ -132,7 +143,12 @@ class _JSONSerializationMixin(object):
   def load_output_json(self, fname, **kwargs):
     return self.load_json(fname, folder='output', **kwargs)
 
-  def save_output_json(self, data_json, fname, subfolder_path=None, verbose=True, locking=False):
+  def save_output_json(self, 
+                       data_json, 
+                       fname, 
+                       subfolder_path=None, 
+                       verbose=True, 
+                       locking=True):
     save_dir = self._outp_dir
     if subfolder_path is not None:
       save_dir = os.path.join(save_dir, subfolder_path.lstrip('/'))
@@ -147,7 +163,12 @@ class _JSONSerializationMixin(object):
   def load_models_json(self, fname, **kwargs):
     return self.load_json(fname, folder='models', **kwargs)
 
-  def save_models_json(self, data_json, fname, subfolder_path=None, verbose=True, locking=False):
+  def save_models_json(self, 
+                       data_json, 
+                       fname, 
+                       subfolder_path=None, 
+                       verbose=True, 
+                       locking=True):
     save_dir = self._modl_dir
     if subfolder_path is not None:
       save_dir = os.path.join(save_dir, subfolder_path.lstrip('/'))
@@ -199,8 +220,16 @@ class _JSONSerializationMixin(object):
                        verbose=False,
                        ):
     assert update_callback is not None, "update_callback must be defined!"
-    self._serialization_lock.acquire(blocking=True)
-    
+    datafile = self.get_file_path(
+      fn=fname,
+      folder='data',
+      subfolder_path=subfolder_path,
+      )
+    if datafile is None:
+      self.P("update_data_json failed due to missing {}".format(datafile), color='error')
+      return False
+    self.lock_resource(datafile)
+    result = None
     try:
       data = self.load_data_json(
         fname=fname,
@@ -219,9 +248,11 @@ class _JSONSerializationMixin(object):
           subfolder_path=subfolder_path,
           locking=False,
           )
-    except:
-      pass
+        result = True
+    except Exception as e:
+      self.P("update_data_json failed: {}".format(e), color='error')
+      result = False
     
-    self._serialization_lock.release()
-    return
+    self.unlock_resource(datafile)
+    return result
           
