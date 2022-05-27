@@ -60,7 +60,6 @@ class LummetryObject(object):
     self.DEBUG = DEBUG
 
     self._messages = deque(maxlen=maxlen_notifications)
-    self._thread_logs = deque(maxlen=20)
 
     if not hasattr(self, '__name__'):
       self.__name__ = self.__class__.__name__
@@ -122,14 +121,10 @@ class LummetryObject(object):
         msg = "{}".format(s)
       else:
         msg = "{} {}".format(self.prefix_log, s)
+      #endif
+    #endif
 
-    _r = -1
-    if self.log.is_main_thread:
-      _r = self.log.P(msg, show_time=t, color=color)
-    else:
-      str_dt_now = dt.now().strftime("%Y-%m-%d %H:%M:%S")
-      msg = '[{}] {}'.format(str_dt_now, msg)
-      self._thread_logs.append({'str_msg' : msg, 'show_time' : t, 'color' : color})
+    _r = self.log.P(msg, show_time=t, color=color)
     return _r
 
   def D(self, s, t=False):
@@ -144,12 +139,8 @@ class LummetryObject(object):
           msg = "[D]{} {}".format(self.prefix_log, s)
         #endif
       #endif
-      if self.log.is_main_thread:
-        _r = self.log.P(msg, show_time = t, color = 'yellow')
-      else:
-        str_dt_now = dt.now().strftime("%Y-%m-%d %H:%M:%S")
-        msg = '[{}] {}'.format(str_dt_now, msg)
-        self._thread_logs.append({'str_msg' : msg, 'show_time' : t, 'color' : 'yellow'})
+      _r = self.log.P(msg, show_time=t, color='yellow')
+    #endif
     return _r
 
   def start_timer(self, tmr_id):
@@ -195,10 +186,3 @@ class LummetryObject(object):
     while len(self._messages) > 0:
       lst.append(self._messages.popleft())
     return lst
-
-  def get_thread_logs(self):
-    lst = []
-    while len(self._thread_logs) > 0:
-      lst.append(self._thread_logs.popleft())
-    return lst
-

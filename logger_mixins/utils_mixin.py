@@ -198,3 +198,17 @@ class _UtilsMixin(object):
     """
     p = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
     return hashlib.md5(p).hexdigest()
+
+  @staticmethod
+  def name_abbreviation(s):
+    name_split = s.upper().split('_')
+    prefix = '[' + name_split[0][:2]
+    if len(name_split) < 2:
+      pass
+    elif len(name_split) < 3:
+      prefix += name_split[1][:2]
+    else:
+      prefix += ''.join([name_split[i][0] for i in range(1, len(name_split))])
+    #endif
+    prefix += ']'
+    return prefix
