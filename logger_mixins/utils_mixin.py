@@ -20,6 +20,7 @@ Copyright 2019-2022 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 """
 
 import os
+import re
 import itertools
 import sys
 import pickle
@@ -201,14 +202,27 @@ class _UtilsMixin(object):
 
   @staticmethod
   def name_abbreviation(s):
-    name_split = s.upper().split('_')
-    prefix = '[' + name_split[0][:2]
+    name_split = []
+    if '_' not in s:
+      # try to split by uppercase - for example VideoStream should become ["VIDEO", "STREAM"]
+      name_split = re.findall('[A-Z][a-z]*', s)
+      name_split = [x.upper() for x in name_split]
+    #endif
+
+    name_split = name_split or s.upper().split('_')
+    prefix = name_split[0][:2]
     if len(name_split) < 2:
       pass
     elif len(name_split) < 3:
       prefix += name_split[1][:2]
     else:
-      prefix += ''.join([name_split[i][0] for i in range(1, len(name_split))])
+      lst = []
+      for i in range(1, len(name_split)):
+        if name_split[i].isdigit():
+          lst.append(name_split[i][:2])
+        else:
+          lst.append(name_split[i][:1])
+      #endfor
+      prefix += ''.join(lst)
     #endif
-    prefix += ']'
     return prefix
