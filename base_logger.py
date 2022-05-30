@@ -170,20 +170,27 @@ class BaseLogger(object):
     # now that we have locking in place we no longer need to cancel in-thread logging    
     # if not self.is_main_thread:
     #   return
+    self.start_timer('_logger', section='LOGGER_internal')
 
     elapsed = tm() - self.last_time
 
+    self.start_timer('_logger_add_log', section='LOGGER_internal')
     self._add_log(
       logstr, show=show,
       noprefix=noprefix,
       show_time=show_time,
       color=color
     )
+    self.end_timer('_logger_add_log', section='LOGGER_internal')
 
+    self.start_timer('_logger_save_log', section='LOGGER_internal')
     self._save_log()
+    self.end_timer('_logger_save_log', section='LOGGER_internal')
+    
     self.last_time = tm()
     self._check_log_size()
-    
+
+    self.end_timer('_logger', section='LOGGER_internal')    
     self.unlock_logger()
     return elapsed
 
