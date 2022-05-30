@@ -285,12 +285,14 @@ class _PickleSerializationMixin(object):
                               update_callback, 
                               decompress=False, 
                               verbose=False, 
-                              subfolder_path=None):
+                              subfolder_path=None,
+                              force_update=False):
     assert update_callback is not None, "update_callback must be defined!"
     datafile = self.get_file_path(
       fn=fn,
       folder='data',
       subfolder_path=subfolder_path,
+      force=True
       )
     if datafile is None:
       self.P("update_pickle_from_data failed due to missing {}".format(datafile), color='error')
@@ -306,7 +308,7 @@ class _PickleSerializationMixin(object):
         locking=False,
         )
       
-      if data is not None:
+      if data is not None or force_update:
         data = update_callback(data)
         
         self.save_pickle_to_data(

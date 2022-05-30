@@ -144,7 +144,7 @@ class BaseLogger(object):
   def unlock_logger(self):
     self.unlock_resource(_LOGGER_LOCK_ID)
     
-  def get_file_path(self, fn, folder, subfolder_path=None):
+  def get_file_path(self, fn, folder, subfolder_path=None, force=False):
     lfld = self.get_target_folder(target=folder)
     if lfld is None:
       datafile = fn
@@ -153,7 +153,7 @@ class BaseLogger(object):
     if subfolder_path is not None:
       datafolder = os.path.join(datafolder, subfolder_path.lstrip('/'))
     datafile = os.path.join(datafolder, fn)
-    if os.path.isfile(datafile):
+    if os.path.isfile(datafile) or force:
       return datafile
     return 
     
