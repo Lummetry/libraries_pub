@@ -20,6 +20,7 @@ Copyright 2019-2022 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 """
 
 import os
+from time import time
 
 class _UploadMixin(object):
   """
@@ -136,6 +137,7 @@ class _UploadMixin(object):
       object_name = "OBJ_"+ str(uuid4()).upper().replace('-','')
     
     try:
+      start_up = time()
       client = Minio(
           endpoint=endpoint,
           access_key=access_key,
@@ -161,8 +163,7 @@ class _UploadMixin(object):
         bucket_name=result.bucket_name, 
         object_name=result.object_name,
         )
-      
-      self.P("Uploaded '{}' as '{}'".format(file_path, url), color='y')
+      self.P("Uploaded '{}' as '{}' in {:.2f}s".format(file_path, url, time()-start_up), color='y')
     except Exception as e:
       self.P(str(e), color='error')
       return None
