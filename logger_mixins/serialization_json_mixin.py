@@ -88,7 +88,8 @@ class _JSONSerializationMixin(object):
             data = json.load(f)
           else:
             data = json.load(f, object_hook=lambda d: {int(k) if k.isnumeric() else k: v for k, v in d.items()})
-      except:
+      except Exception as e:
+        self.P("JSON load failed: {}".format(e), color='r')
         data = None
       if locking:
         self.unlock_resource(datafile)
