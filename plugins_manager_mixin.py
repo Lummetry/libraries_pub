@@ -33,13 +33,20 @@ class _PluginsManagerMixin:
     names = [x.replace('_', '').lower() for x in files]
     return names, modules
 
-  def _get_plugin_by_name(self, plugins_location, name):
+  def _get_plugin_by_name(self, lst_plugins_locations, name):
     name = name.lower()
-    names, modules = self._get_avail_plugins(plugins_location)
-    idx = names.index(name)
-    return modules[idx]
+    for plugins_location in lst_plugins_locations:
+      names, modules = self._get_avail_plugins(plugins_location)
+      if name in names:
+        idx = names.index(name)
+        return modules[idx]
 
-  def _get_module_name_and_class(self, plugins_location, name, suffix=None):
+    return
+
+  def _get_module_name_and_class(self, locations, name, suffix=None):
+    if not isinstance(locations, list):
+      locations = [locations]
+
     _class_name, _cls_def, _config_dict = None, None, None
     simple_name = name.replace('_','')
 
@@ -48,11 +55,9 @@ class _PluginsManagerMixin:
 
     suffix = suffix.replace('_', '')
 
-    _module_name = None
-    try:
-      _module_name = self._get_plugin_by_name(plugins_location, simple_name)
-    except:
-      self.P("Error with finding plugin '{}' in location '{}'".format(simple_name, plugins_location))
+    _module_name = self._get_plugin_by_name(locations, simple_name)
+    if _module_name is None:
+      self.P("Error with finding plugin '{}' in locations '{}'".format(simple_name, locations))
       return _module_name, _class_name, _cls_def, _config_dict
 
     try:
@@ -63,7 +68,8 @@ class _PluginsManagerMixin:
           _class_name, _cls_def = _cls
       if _class_name is None:
         self.P("ERROR: Could not find class match for {}. Available classes are: {}".format(
-          simple_name, [x[0] for x in classes]))
+          simple_name, [x[0] for x in classes]
+        ))
       _config_dict = getattr(module, "_CONFIG", None)
     except:
       str_err = traceback.format_exc()

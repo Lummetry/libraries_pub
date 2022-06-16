@@ -182,7 +182,7 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
   def _create_worker(self):
     _module_name, _class_name, _cls_def, _config_dict = self._get_module_name_and_class(
-      plugins_location=self.__workers_location,
+      locations=self.__workers_location,
       name=self.__worker_name,
       suffix=self.__worker_suffix
     )
