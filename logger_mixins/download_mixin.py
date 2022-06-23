@@ -64,7 +64,7 @@ class _DownloadMixin(object):
                      url,
                      fn=None,
                      force_download=False,
-                     target='models',
+                     target=None,
                      print_progress=True,
                      publish_func=None,
                      publish_only_value=False,
@@ -122,7 +122,7 @@ class _DownloadMixin(object):
 
     """
     import urllib.request
-    assert target in ['models', 'data', 'output'], "target must be either 'models', 'data' or 'output'"
+    assert target in ['models', 'data', 'output', None], "target must be either 'models', 'data', 'output' or None"
 
     if type(url) is dict:
       urls = [v for k, v in url.items()]
@@ -140,8 +140,11 @@ class _DownloadMixin(object):
         self.raise_error("must provided same nr of urls and file names")
     
     if verbose:
-      self.P("Checking and (maybe) downloading `{}` file(s) {}".format(
-        target, fns))
+      str_log = "Checking and (maybe) downloading file(s) {}".format(target, fns)
+      if target is not None:
+        str_log += " (target=`{}`)".format(target)
+      self.P(str_log)
+    #endif
 
     def _print_download_progress(count, block_size, total_size):
       """
@@ -171,10 +174,10 @@ class _DownloadMixin(object):
       return
 
     # Path for local file.
-    download_dir = self.get_target_folder(target=target)
-
-    if download_dir is None:
-      self.raise_error("Unknown target {}".format(target))
+    if target is not None:
+      download_dir = self.get_target_folder(target=target)
+    else:
+      download_dir = ''
 
     saved_files = []
     msgs = []
