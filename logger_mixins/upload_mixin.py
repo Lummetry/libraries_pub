@@ -85,6 +85,64 @@ class _UploadMixin(object):
     
     return url     
   
+  def minio_download(self,
+                   local_file_path, 
+                   endpoint, 
+                   access_key, 
+                   secret_key, 
+                   bucket_name, 
+                   object_name,
+                   ):       
+    """
+    
+
+    Parameters
+    ----------
+    local_file_path : str
+      relative or full path to the (future) local file.
+    endpoint : str
+      address of the MinIO server.
+    access_key : str
+      user.
+    secret_key : str
+      password.
+    bucket_name : str
+      preconfigureg bucket name.
+    object_name : str
+      a object name - can be None and will be auto-generated
+
+    Returns
+    -------
+      saved file name
+
+    """            
+    from minio import Minio
+    
+    try:
+      start_up = time()
+      client = Minio(
+          endpoint=endpoint,
+          access_key=access_key,
+          secret_key=secret_key,
+          secure=False,
+          )
+      
+      res = client.fget_object(
+        bucket_name=bucket_name, 
+        object_name=object_name, 
+        file_path=local_file_path,
+        )
+
+      self.P("Downloaded '{}' from {}/{}/{} in {:.2f}s".format(
+        local_file_path, endpoint, bucket_name, object_name, 
+        time()-start_up), color='y')
+    except Exception as e:
+      self.P(str(e), color='error')
+      return None
+
+    return local_file_path
+  
+
   def minio_upload(self,
                    file_path, 
                    endpoint, 
