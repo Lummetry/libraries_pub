@@ -102,7 +102,8 @@ class _UploadMixin(object):
           hour=0, minute=0, second=0, microsecond=0,
           ) + tdelta(days=days_retention)
         retention = Retention(GOVERNANCE, date)
-          
+
+      self.P("Uploading '{} to minio ...".format(file_path))
       result = client.fput_object(
         file_path=file_path,
         bucket_name=bucket_name,
@@ -114,7 +115,7 @@ class _UploadMixin(object):
         bucket_name=result.bucket_name, 
         object_name=result.object_name,
         )
-      self.P("Uploaded '{}' as '{}' in {:.2f}s".format(file_path, url, time()-start_up), color='y')
+      self.P("Uploaded '{}' as '{}' in {:.2f}s".format(file_path, url, time()-start_up), color='g')
     except Exception as e:
       self.P(str(e), color='error')
       return None
