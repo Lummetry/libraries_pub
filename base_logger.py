@@ -133,6 +133,7 @@ class BaseLogger(object):
       from win32event import CreateMutex
       from win32api import GetLastError
       from winerror import ERROR_ALREADY_EXISTS
+      self.P("Attempting to create lock on current Windows process for id '{}'".format(str_lock_name))
       mutex_handle = CreateMutex(None, 1, str_lock_name)
       err = GetLastError()
       if err == ERROR_ALREADY_EXISTS:
@@ -141,15 +142,18 @@ class BaseLogger(object):
         return None
       else:
         # maybe show some text
-        self.P("Current Windows process has acquired id '{}'".format(str_lock_name), color='g')
+        self.P("Current Windows process has acquired id '{}':{} ({})".format(
+          str_lock_name, mutex_handle, err), color='g')
         return mutex_handle    
     else:
       import socket
+      self.P("Attempting to create lock on current Linux process for id '{}'".format(str_lock_name))
       _lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
       try:
         _lock_socket.bind('\0' + str_lock_name)
         # maybe show some text
-        self.P("Current Linux process has acquired id '{}'".format(str_lock_name), color='g')
+        self.P("Current Linux process has acquired id '{}': {}".format(
+          str_lock_name, _lock_socket), color='g')
         return _lock_socket
       except socket.error:
         # maybe show some text
