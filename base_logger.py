@@ -35,7 +35,7 @@ from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '9.0.0.3'
+__VER__ = '9.0.0.4'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -125,6 +125,37 @@ class BaseLogger(object):
       self.P('  WARNING: Debug is NOT enabled in Logger, some functionalities are DISABLED', color='r')
 
     return
+  
+  def lock_process(self, str_lock_name):
+    import os
+    if os.name == 'nt':
+      # windows
+      from win32event import CreateMutex
+      from win32api import GetLastError
+      from winerror import ERROR_ALREADY_EXISTS
+      mutex_handle = CreateMutex(None, 1, 'SB_ID')
+      err = GetLastError()
+      if err == ERROR_ALREADY_EXISTS:
+        # maybe show some text
+        self.P("Another Windows process has already acquired id '{}'".format(str_lock_name), color='r')
+        return None
+      else:
+        # maybe show some text
+        self.P("Current Windows process has acquired id '{}'".format(str_lock_name), color='g')
+        return mutex_handle    
+    else:
+      import socket
+      _lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+      try:
+        _lock_socket.bind('\0' + 'SB_ID')
+        # maybe show some text
+        self.P("Current Linux process has acquired id '{}'".format(str_lock_name), color='g')
+        return _lock_socket
+      except socket.error:
+        # maybe show some text
+        self.P("Another Linux process has already acquired id '{}'".format(str_lock_name), color='r')
+        return None
+    
   
   def lock_resource(self, str_res):
     if str_res not in self._lock_table:
