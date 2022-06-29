@@ -155,9 +155,10 @@ class BaseLogger(object):
         self.P("Current Linux process has acquired id '{}': {}".format(
           str_lock_name, _lock_socket), color='g')
         return _lock_socket
-      except socket.error:
+      except Exception as err:
         # maybe show some text
-        self.P("Another Linux process has already acquired id '{}'".format(str_lock_name), color='r')
+        self.P("Another Linux process has already acquired id '{}'. Error: {}".format(
+          str_lock_name, err), color='r')
         return None
     
   
