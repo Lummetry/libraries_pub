@@ -160,7 +160,7 @@ class _TimersMixin(object):
   def end_timer_no_skip(self, sname, section=None):
     return self.end_timer(sname, skip_first_timing=False, section=section)
 
-  def end_timer(self, sname, skip_first_timing=True, section=None):
+  def end_timer(self, sname, skip_first_timing=False, section=None):
     section = section or DEFAULT_SECTION
     if sname not in self.timers[section]:
       return
@@ -189,7 +189,7 @@ class _TimersMixin(object):
       ctimer['MEAN'] = avg
     return result
 
-  def stop_timer(self, sname, skip_first_timing=True, section=None):
+  def stop_timer(self, sname, skip_first_timing=False, section=None):
     return self.end_timer(sname=sname, skip_first_timing=skip_first_timing, section=section)
 
   def show_timer_total(self, sname, section=None):
