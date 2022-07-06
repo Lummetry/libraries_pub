@@ -35,7 +35,7 @@ from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '9.0.0.4'
+__VER__ = '9.0.0.5'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -126,8 +126,29 @@ class BaseLogger(object):
 
     return
   
+  def is_running(self, verbose=True):
+    return self.same_script_already_running(verbose=verbose)
+  
+  def same_script_already_running(self, verbose=True):
+    import psutil
+    CMD = 'python'
+    script_file = sys.argv[0]
+    if script_file == '':
+      self.P("Cannot get script file name", color='r')
+      return False
+    for q in psutil.process_iter():
+      if q.name().startswith(CMD):
+        if (
+            len(q.cmdline())>1 and 
+            script_file in q.cmdline()[1] and 
+            q.pid != os.getpid()
+            ):
+          if verbose:
+            self.P("Python '{}' process is already running".format(script_file), color='m')
+          return True
+    return False
+  
   def lock_process(self, str_lock_name):
-    import os
     if os.name == 'nt':
       # windows
       from win32event import CreateMutex
@@ -146,20 +167,32 @@ class BaseLogger(object):
           str_lock_name, mutex_handle, err), color='g')
         return mutex_handle    
     else:
-      import socket
-      self.P("Attempting to create lock on current Linux process for id '{}'".format(str_lock_name))
-      _lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-      try:
-        _lock_socket.bind('\0' + str_lock_name)
-        # maybe show some text
-        self.P("Current Linux process has acquired id '{}': {}".format(
-          str_lock_name, _lock_socket), color='g')
-        return _lock_socket
-      except Exception as err:
-        # maybe show some text
-        self.P("Another Linux process has already acquired id '{}'. Error: {}".format(
-          str_lock_name, err), color='r')
-        return None
+      import platform
+      str_platform = platform.system()
+      if str_platform.lower() == 'darwin':
+        # macos
+        self.P("Running on MacOS. Skipping mutex and checking if script is running", color='m')
+        if self.same_script_already_running():
+          return None        
+        return -1
+      else:         
+        import socket
+        self.P("Attempting to create lock on current Linux process for id '{}'".format(str_lock_name))
+        _lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        try:
+          _lock_socket.bind('\0' + str_lock_name)
+          # maybe show some text
+          self.P("Current Linux process has acquired id '{}': {}".format(
+            str_lock_name, _lock_socket), color='g')
+          return _lock_socket
+        except Exception as err:
+          # maybe show some text
+          self.P("Another Linux process has already acquired id '{}'. Error: {}".format(
+            str_lock_name, err), color='r')
+          return None
+      # end if platform
+    # end if not windows
+    return
     
   
   def lock_resource(self, str_res):
