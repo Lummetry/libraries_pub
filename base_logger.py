@@ -35,7 +35,7 @@ from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '9.0.1.0'
+__VER__ = '9.0.1.1'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -193,6 +193,24 @@ class BaseLogger(object):
       # end if platform
     # end if not windows
     return
+  
+  def get_processor_platform(self):
+    import platform
+    import subprocess
+    import re
+    str_system = platform.system()
+    if str_system == "Windows":
+      return platform.processor()
+    elif str_system == "Darwin":
+      os.environ['PATH'] = os.environ['PATH'] + os.pathsep + '/usr/sbin'
+      command ="sysctl -n machdep.cpu.brand_string"
+      return subprocess.check_output(command).strip()
+    elif str_system == "Linux":
+      command = "cat /proc/cpuinfo"
+      all_info = subprocess.check_output(command, shell=True).decode().strip()
+      for line in all_info.split("\n"):
+        if "model name" in line:
+          return re.sub( ".*model name.*:", "", line,1)    
     
   
   def lock_resource(self, str_res):
