@@ -18,12 +18,17 @@ Copyright 2019-2022 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 @project: 
 @description:
 """
+import numpy as np
 
 from collections import OrderedDict, deque
 from time import perf_counter
 
+
 DEFAULT_SECTION = 'main'
 DEFAULT_THRESHOLD_NO_SHOW = 0
+
+MAX_LAPS = 10_000
+ZERO_THRESHOLD = 0.0001
 
 class _TimersMixin(object):
   """
@@ -83,6 +88,8 @@ class _TimersMixin(object):
 
       'START_COUNT': 0,
       'STOP_COUNT': 0,
+      
+      'LAPS' : deque(maxlen=MAX_LAPS),
     }
 
   def restart_timer(self, sname, section=None):
@@ -173,6 +180,7 @@ class _TimersMixin(object):
       ctimer['STOP_COUNT'] += 1
       ctimer['END'] = perf_counter()
       result = ctimer['END'] - ctimer['START']
+      ctimer['LAPS'].append(result)
       _count = ctimer['COUNT']
       _prev_avg = ctimer['MEAN']
       avg = _count * _prev_avg
@@ -208,6 +216,7 @@ class _TimersMixin(object):
                    show_count=True,
                    div=None,
                    threshold_no_show=None,
+                   max_key_size=30,
                    ):
 
     if threshold_no_show is None:
@@ -219,24 +228,33 @@ class _TimersMixin(object):
       return
 
     mean_time = ctimer['MEAN']
+    np_laps = np.array(ctimer['LAPS'])
+    laps_mean = np_laps.mean()
+    laps_std = np_laps.std()
+    laps_zcount = (np_laps <= ZERO_THRESHOLD).sum()
+    laps_nzcount = len(np_laps) - laps_zcount
+    laps_nz_mean = np_laps.sum() / (laps_nzcount + 1e-14)
+    laps_low_cnt = (np_laps <= max(ZERO_THRESHOLD, laps_mean - laps_std)).sum()
+    laps_low_prc =  laps_low_cnt / np_laps.shape[0] * 100
     count = ctimer['COUNT']
+    
     if mean_time < threshold_no_show:
       return
 
     max_time = ctimer['MAX']
-    current_time = ctimer['END'] - ctimer['START']
+    current_time = np_laps[-1] # ctimer['END'] - ctimer['START']
 
     if not was_recently_seen:
-      key = '[' + key + ']'
+      key = '[' + key[:max_key_size] + ']'
 
     if show_levels:
-      s_key = '  ' * ctimer['LEVEL'] + key
+      s_key = '  ' * ctimer['LEVEL'] + key[:max_key_size]
     else:
-      s_key = key
+      s_key = key[:max_key_size]
     msg = None
     if summary in ['mean', 'avg']:
       # self.verbose_log(" {} = {:.4f}s (max lap = {:.4f}s)".format(s_key,mean_time,max_time))
-      msg = " {} = {:.4f}s".format(s_key, mean_time)
+      msg = " {} = {:.4f}s/q:{:.4f}s/nz:{:.4f}s".format(s_key, mean_time, laps_mean, laps_nz_mean)
     else:
       # self.verbose_log(" {} = {:.4f}s (max lap = {:.4f}s)".format(s_key,total, max_time))
       total = mean_time * count
@@ -244,9 +262,9 @@ class _TimersMixin(object):
     if show_max:
       msg += ", max: {:.4f}s".format(max_time)
     if show_last:
-      msg += ", last: {:.4f}s".format(current_time)
+      msg += ", lst: {:.4f}s".format(current_time)
     if show_count:
-      msg += ", cnt: {}".format(count)
+      msg += ", c: {}/L:{:.0f}%".format(count, laps_low_prc)
     if div is not None:
       msg += ", itr(B{}): {:.4f}s".format(div, mean_time / div)
     return msg
