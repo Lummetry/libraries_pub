@@ -242,7 +242,7 @@ class _TimersMixin(object):
       return
 
     max_time = ctimer['MAX']
-    current_time = np_laps[-1] # ctimer['END'] - ctimer['START']
+    current_time = np_laps[-1] if len(np_laps) > 0 else -1 # ctimer['END'] - ctimer['START']
 
     if not was_recently_seen:
       key = '[' + key[:max_key_size] + ']'
