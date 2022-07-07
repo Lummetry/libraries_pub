@@ -35,7 +35,7 @@ from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '9.0.1.2'
+__VER__ = '9.0.1.3'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -116,8 +116,8 @@ class BaseLogger(object):
       lib_ver = __VER__
     ver = "v{}".format(lib_ver) if lib_ver != "" else ""
     self.verbose_log(
-      "Library [{} {}] initialized on machine [{}]. Logger v{}.".format(
-        self.__lib__, ver, self.MACHINE_NAME, __VER__
+      "Library [{} {}] initialized on machine [{}][{}]. Logger v{}.".format(
+        self.__lib__, ver, self.MACHINE_NAME, self.get_processor_platform(), __VER__
       ),
       color='green'
     )
