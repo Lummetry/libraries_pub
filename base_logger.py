@@ -35,7 +35,7 @@ from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '9.0.1.1'
+__VER__ = '9.0.1.2'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -103,7 +103,10 @@ class BaseLogger(object):
     self.config_data = None
     self.MACHINE_NAME = None
     self.COMPUTER_NAME = None
+    self.processor_platform = None
     _ = self.get_machine_name()
+    
+    self.analyze_processor_platform()
 
     self._configure_data_and_dirs(config_file, config_file_encoding)
     self._generate_log_path()
@@ -194,23 +197,28 @@ class BaseLogger(object):
     # end if not windows
     return
   
-  def get_processor_platform(self):
+  def analyze_processor_platform(self):
     import platform
     import subprocess
     import re
     str_system = platform.system()
     if str_system == "Windows":
-      return platform.processor()
+      self.processor_platform = platform.processor()
     elif str_system == "Darwin":
       os.environ['PATH'] = os.environ['PATH'] + os.pathsep + '/usr/sbin'
       command ="sysctl -n machdep.cpu.brand_string"
-      return subprocess.check_output(command).strip()
+      self.processor_platform = subprocess.check_output(command).strip()
     elif str_system == "Linux":
       command = "cat /proc/cpuinfo"
       all_info = subprocess.check_output(command, shell=True).decode().strip()
       for line in all_info.split("\n"):
         if "model name" in line:
-          return re.sub( ".*model name.*:", "", line,1)    
+          self.processor_platform = re.sub( ".*model name.*:", "", line,1)    
+          break
+    return
+  
+  def get_processor_platform(self):
+    return self.processor_platform
     
   
   def lock_resource(self, str_res):
