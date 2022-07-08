@@ -205,10 +205,9 @@ class BaseLogger(object):
     if str_system == "Windows":
       self.processor_platform = platform.processor()
     elif str_system == "Darwin":
-      if False:
-        os.environ['PATH'] = os.environ['PATH'] + os.pathsep + '/usr/sbin'
-        command ="sysctl -n machdep.cpu.brand_string"
-        self.processor_platform = subprocess.check_output(command).strip()
+      os.environ['PATH'] = os.environ['PATH'] + os.pathsep + '/usr/sbin'
+      command ="sysctl -n machdep.cpu.brand_string"
+      self.processor_platform = subprocess.check_output(command, shell=True).strip()
     elif str_system == "Linux":
       command = "cat /proc/cpuinfo"
       all_info = subprocess.check_output(command, shell=True).decode().strip()
