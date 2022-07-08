@@ -229,13 +229,25 @@ class _TimersMixin(object):
 
     mean_time = ctimer['MEAN']
     np_laps = np.array(ctimer['LAPS'])
-    laps_mean = np_laps.mean()
-    laps_std = np_laps.std()
-    laps_zcount = (np_laps <= ZERO_THRESHOLD).sum()
-    laps_nzcount = len(np_laps) - laps_zcount
-    laps_nz_mean = np_laps.sum() / (laps_nzcount + 1e-14)
-    laps_low_cnt = (np_laps <= max(ZERO_THRESHOLD, laps_mean - laps_std)).sum()
-    laps_low_prc =  laps_low_cnt / np_laps.shape[0] * 100
+    if len(np_laps) > 0:
+      laps_mean = np_laps.mean()
+      laps_std = np_laps.std()
+      laps_zcount = (np_laps <= ZERO_THRESHOLD).sum()
+      laps_nzcount = len(np_laps) - laps_zcount
+      laps_nz_mean = np_laps.sum() / (laps_nzcount + 1e-14)
+      laps_low_cnt = (np_laps <= max(ZERO_THRESHOLD, laps_mean - laps_std)).sum()
+      laps_low_prc =  laps_low_cnt / np_laps.shape[0] * 100
+    else:
+      # not mandatory but nice for forever opened 1 time timers
+      laps_mean = -1
+      laps_std = -1
+      laps_zcount = -1
+      laps_nzcount = -1
+      laps_nz_mean = -1
+      laps_low_cnt = -1
+      laps_low_prc =  -1
+      # end not mandatory
+
     count = ctimer['COUNT']
     
     if mean_time < threshold_no_show:
