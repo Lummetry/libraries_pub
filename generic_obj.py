@@ -167,7 +167,7 @@ class LummetryObject(object):
       tn = '{}__{}'.format(self.__class__.__name__, name)
     return tn
 
-  def _create_notification(self, notification_type, notification):
+  def _create_notification(self, notification_type, notification, **kwargs):
     message = {
       'MODULE': self.__class__.__name__
     }
@@ -178,6 +178,7 @@ class LummetryObject(object):
     message['NOTIFICATION_TYPE'] = notification_type
     message['NOTIFICATION'] = notification
     message['TIMESTAMP'] = self.log.now_str(nice_print=True, short=False)
+    message = {**message, **kwargs}
     self._messages.append(message)
     return
 
