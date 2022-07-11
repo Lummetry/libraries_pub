@@ -27,8 +27,8 @@ from time import perf_counter
 DEFAULT_SECTION = 'main'
 DEFAULT_THRESHOLD_NO_SHOW = 0
 
-MAX_LAPS = 10_000
-ZERO_THRESHOLD = 0.0001
+MAX_LAPS = 1_000
+ZERO_THRESHOLD = 5e-4
 
 class _TimersMixin(object):
   """
