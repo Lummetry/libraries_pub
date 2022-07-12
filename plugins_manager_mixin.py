@@ -26,6 +26,10 @@ import traceback
 
 class _PluginsManagerMixin:
 
+  def __init__(self):
+    super(_PluginsManagerMixin, self).__init__()
+    return
+
   def _get_avail_plugins(self, plugins_location):
     path = plugins_location.replace('.', '/')
     files = [os.path.splitext(x)[0] for x in os.listdir(path) if '.py' in x]
