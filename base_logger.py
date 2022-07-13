@@ -1129,3 +1129,26 @@ class BaseLogger(object):
   @property
   def is_main_thread(self):
     return threading.current_thread() is threading.main_thread()
+  
+  def dict_pretty_format(self, d, indent=4, display_callback=None, display=False): 
+    if display and display_callback is None:
+      display_callback = self.P
+    lst_data = []
+    def deep_parse(dct, ind=indent):
+      for key, value in dct.items():
+        str_key = str(key) if not isinstance(key, str) else "'{}'".format(key)
+        lst_data.append(' ' * ind + str(str_key) + ' : ')
+        if isinstance(value, dict):
+          lst_data[-1] = lst_data[-1] + '{'
+          deep_parse(value, ind=ind + indent)
+          lst_data.append(' ' * ind + '}')
+        else:
+          str_value = str(value) if not isinstance(value,str) else "'{}'".format(value)
+          lst_data[-1] = lst_data[-1] + str_value
+      return
+    deep_parse(dct=d,ind=0)
+    if display_callback is not None:
+      for itm in lst_data:
+        display_callback(itm)
+    return lst_data
+      
