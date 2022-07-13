@@ -34,7 +34,7 @@ class _PluginsManagerMixin:
     path = plugins_location.replace('.', '/')
     files = [os.path.splitext(x)[0] for x in os.listdir(path) if '.py' in x]
     modules = [plugins_location + '.' + x for x in files]
-    names = [x.replace('_', '').lower() for x in files]
+    names = [x.replace('__local__', '').replace('_', '').lower() for x in files]
     return names, modules
 
   def _get_plugin_by_name(self, lst_plugins_locations, name):
