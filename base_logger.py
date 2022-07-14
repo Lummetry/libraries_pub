@@ -35,7 +35,7 @@ from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '9.0.2.0'
+__VER__ = '9.0.2.1'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"

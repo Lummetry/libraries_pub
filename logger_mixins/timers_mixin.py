@@ -368,10 +368,17 @@ class _TimersMixin(object):
   def get_timer(self, skey, section=None):
     return self.get_timing_dict(skey, section=section)
 
-  def get_timer_mean(self, skey, section=None):
+  def get_timer_overall_mean(self, skey, section=None):
     tmr = self.get_timer(skey, section=section)
     result = tmr.get('MEAN', 0)
     return result
+
+  def get_timer_mean(self, skey, section=None):
+    tmr = self.get_timer(skey, section=section)
+    laps = tmr.get('LAPS', [])
+    result = np.mean(laps) if len(laps) > 0 else -1
+    return result
+
 
   def get_timer_count(self, skey, section=None):
     tmr = self.get_timer(skey, section=section)
