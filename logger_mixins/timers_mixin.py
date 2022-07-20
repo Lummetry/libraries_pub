@@ -298,7 +298,12 @@ class _TimersMixin(object):
                   show_last=True,
                   show_count=True,
                   div=None,
-                  threshold_no_show=None):
+                  threshold_no_show=None,
+                  selected_sections=None,
+                  ):
+
+    if selected_sections is not None:
+      assert isinstance(selected_sections, list)
 
     if threshold_no_show is None:
       threshold_no_show = DEFAULT_THRESHOLD_NO_SHOW
@@ -343,6 +348,9 @@ class _TimersMixin(object):
 
       ## SORTING sections and keeping the default section the first one ..
       keys = list(self.timers.keys())
+      if selected_sections is not None:
+        keys = selected_sections
+
       add_back_default_section = False
       if DEFAULT_SECTION in keys:
         add_back_default_section = True
