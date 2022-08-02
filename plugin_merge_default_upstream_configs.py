@@ -26,13 +26,14 @@ class _PluginMergeDefaultAndUpstreamConfigs(object):
     super(_PluginMergeDefaultAndUpstreamConfigs, self).__init__()
     return
 
-  def _merge_prepare_config(self, default_config=None, delta_config=None):
+  def _merge_prepare_config(self, default_config=None, delta_config=None, uppercase_keys=True):
     if default_config is None:
       default_config = self._default_config
 
     if delta_config is None:
       delta_config = self._upstream_config_params
-
+    delta_config = {k.upper():v for k,v in delta_config.items()}
+    
     self.P("Praparing {} configuration...".format(self.__class__.__name__), color='b')
     if default_config is None:
       self.P("WARNING: no default config was provided at {} startup!".format(
