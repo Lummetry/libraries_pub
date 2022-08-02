@@ -46,6 +46,7 @@ class _UploadMixin(object):
                    days_retention=None,
                    debug=False,
                    return_object_name=False,
+                   secure=False,
                    ):       
     """
     
@@ -93,7 +94,7 @@ class _UploadMixin(object):
           endpoint=endpoint,
           access_key=access_key,
           secret_key=secret_key,
-          secure=False,
+          secure=secure,
           )
       
       retention = None

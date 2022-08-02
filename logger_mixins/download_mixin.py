@@ -300,6 +300,7 @@ class _DownloadMixin(object):
                      secret_key,
                      bucket_name,
                      object_name,
+                     secure=False,
                      ):
     """
 
@@ -332,7 +333,7 @@ class _DownloadMixin(object):
         endpoint=endpoint,
         access_key=access_key,
         secret_key=secret_key,
-        secure=False,
+        secure=secure,
       )
 
       res = client.fget_object(
