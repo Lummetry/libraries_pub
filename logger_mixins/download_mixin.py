@@ -38,7 +38,13 @@ class _DownloadMixin(object):
     super(_DownloadMixin, self).__init__()
     return
 
-  def maybe_download_model(self, url, model_file, force_download=False, url_model_cfg=None):
+  def maybe_download_model(self, 
+                           url, 
+                           model_file, 
+                           force_download=False, 
+                           url_model_cfg=None,
+                           **kwargs,
+                           ):
     """
     url11 = 'https://www.dropbox.com/s/t6qfxiopcr8yvlq/60_xomv_employee01_002_e142_acc0.985.pb?dl=1'
     url12 = 'https://www.dropbox.com/s/akzyk9vcuqluzup/60_xomv_employee01_002_e142_acc0.985.pb.txt?dl=1'
@@ -57,7 +63,8 @@ class _DownloadMixin(object):
       url=urls,
       fn=fn,
       force_download=force_download,
-      target='models'
+      target='models',
+      **kwargs,
     )
 
   def maybe_download(self,
@@ -69,8 +76,13 @@ class _DownloadMixin(object):
                      publish_func=None,
                      publish_only_value=False,
                      verbose=True,
-                     unzip=False):
+                     unzip=False,
+                     **kwargs
+                     ):
     """
+    NEW VERSION: if url starts with 'minio:' the function will retrieve minio conn
+                 params from **kwargs and use minio_download (if needed or forced)
+      
     will (maybe) download a from a given (full) url a file and save to
     target folder in `model_file`.
 
@@ -190,6 +202,7 @@ class _DownloadMixin(object):
       # Check if the file already exists, otherwise we need to download it now.
       has_file = os.path.exists(save_path)
       if not has_file or force_download:
+        # handle http standard download
         # automatically add .zip in this corner case
         if unzip and not save_path.endswith('.zip'):
           save_path += '.zip'
@@ -204,21 +217,33 @@ class _DownloadMixin(object):
             self.P("Forced download: removing ...{}".format(save_path[-40:]))
           os.remove(save_path)
 
-        # Download the file from the internet.
-        if verbose:
-          self.P("Downloading {} from {}...".format(_fn, _url[:40]))
-        reporthook = _print_download_progress
-        file_path, msg = urllib.request.urlretrieve(
-          url=_url,
-          filename=save_path,
-          reporthook=reporthook
-        )
-
-        msgs.append(msg)
-        print("", flush=True)
-        if verbose:
-          self.P("Download done and saved in ...{}".format(file_path[-40:]))
-        # endif
+        if _url.startswith('minio:'):
+          # handle MinIO url
+          _url = _url.replace('minio:','')
+          file_path = self.minio_download(
+            local_file_path=save_path,
+            object_name=_url,
+            **kwargs,
+          )
+          
+        elif _url.startswith('http'):  
+          # Download the file from the internet.
+          if verbose:
+            self.P("Downloading {} from {}...".format(_fn, _url[:40]))
+          reporthook = _print_download_progress
+          file_path, msg = urllib.request.urlretrieve(
+            url=_url,
+            filename=save_path,
+            reporthook=reporthook
+          )
+  
+          msgs.append(msg)
+          print("", flush=True)
+          if verbose:
+            self.P("Download done and saved in ...{}".format(file_path[-40:]))
+          # endif  
+        else:
+          self.P("ERROR: unknown url type: {}".format(_url), color='error')
 
         if unzip:
           _directory_to_extract_to = os.path.splitext(save_path)[0]
@@ -301,6 +326,7 @@ class _DownloadMixin(object):
                      bucket_name,
                      object_name,
                      secure=False,
+                     **kwargs,
                      ):
     """
 
