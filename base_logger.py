@@ -1130,7 +1130,7 @@ class BaseLogger(object):
   def is_main_thread(self):
     return threading.current_thread() is threading.main_thread()
   
-  def dict_pretty_format(self, d, indent=4, display_callback=None, display=False): 
+  def dict_pretty_format(self, d, indent=4, as_str=True, display_callback=None, display=False): 
     if display and display_callback is None:
       display_callback = self.P
     lst_data = []
@@ -1147,10 +1147,17 @@ class BaseLogger(object):
           lst_data[-1] = lst_data[-1] + str_value
       return
     deep_parse(dct=d,ind=0)
+    
+    displaybuff = "{\n"
+    for itm in lst_data:
+      displaybuff += '  ' + itm + '\n'
+    displaybuff += "}"
+    
     if display_callback is not None:
-      displaybuff = "Dict pretty formatter:\n"
-      for itm in lst_data:
-        displaybuff += itm + '\n'
+      displaybuff = "Dict pretty formatter:\n" + displaybuff
       display_callback(displaybuff)
-    return lst_data
+    if as_str:
+      return displaybuff
+    else:
+      return lst_data
       
