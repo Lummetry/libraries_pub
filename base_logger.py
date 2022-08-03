@@ -1148,7 +1148,9 @@ class BaseLogger(object):
       return
     deep_parse(dct=d,ind=0)
     if display_callback is not None:
+      displaybuff = "Dict pretty formatter:\n"
       for itm in lst_data:
-        display_callback(itm)
+        displaybuff += itm + '\n'
+      display_callback(displaybuff)
     return lst_data
       
