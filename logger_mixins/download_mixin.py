@@ -152,9 +152,7 @@ class _DownloadMixin(object):
         self.raise_error("must provided same nr of urls and file names")
     
     if verbose:
-      str_log = "Checking and (maybe) downloading file(s) {}".format(target, fns)
-      if target is not None:
-        str_log += " (target=`{}`)".format(target)
+      str_log = "Maybe dl '{}' to '{}' from '{}'".format(fns, target, urls)
       self.P(str_log)
     #endif
 
@@ -194,6 +192,12 @@ class _DownloadMixin(object):
     saved_files = []
     msgs = []
     for _fn, _url in zip(fns, urls):
+      if _fn is None or _url is None:
+        msg = "Cannot download '{}' from '{}'".format(_fn, _url)
+        msgs.append(msg)
+        saved_files.append(None)
+        self.P(msg)
+        continue
       ## useful if _fn is a hierarchy not a filename
       _append_to_download_dir, _fn = os.path.split(_fn)
       _crt_download_dir = os.path.join(download_dir, _append_to_download_dir)
