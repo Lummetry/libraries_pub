@@ -196,7 +196,7 @@ class _DownloadMixin(object):
         msg = "Cannot download '{}' from '{}'".format(_fn, _url)
         msgs.append(msg)
         saved_files.append(None)
-        self.P(msg)
+        self.P(msg, color='error')
         continue
       ## useful if _fn is a hierarchy not a filename
       _append_to_download_dir, _fn = os.path.split(_fn)
