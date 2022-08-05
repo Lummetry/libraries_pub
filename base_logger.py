@@ -104,6 +104,12 @@ class BaseLogger(object):
     self.MACHINE_NAME = None
     self.COMPUTER_NAME = None
     self.processor_platform = None
+    self.python_version = sys.version.split(' ')[0]
+    self.python_major = int(self.python_version.split('.')[0])
+    self.python_minor = int(self.python_version.split('.')[1])
+    if self.python_major < 3:
+      self.P("WARNING: Python 2 or lower detected. Run will fail!", color='error')
+      
     _ = self.get_machine_name()
     
     self.analyze_processor_platform()
@@ -111,6 +117,8 @@ class BaseLogger(object):
     self._configure_data_and_dirs(config_file, config_file_encoding)
     self._generate_log_path()
     self._check_additional_configs()
+    
+    self.git_branch = self.get_active_git_branch()
 
     if lib_ver == "":
       lib_ver = __VER__
@@ -131,6 +139,18 @@ class BaseLogger(object):
   
   def is_running(self, verbose=True):
     return self.same_script_already_running(verbose=verbose)
+
+  def get_active_git_branch(self):
+    fn = './.git/HEAD'
+    if os.path.isfile(fn):
+      with open(fn, 'r') as f:
+        content = f.readlines()
+      for line in content:
+        if line.startswith('ref:'):
+          return line.partition('refs/heads/')[2].replace('\n','')
+    else:
+      return None
+  
   
   def same_script_already_running(self, verbose=True):
     import psutil
