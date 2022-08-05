@@ -234,7 +234,7 @@ class _TimersMixin(object):
       laps_std = np_laps.std()
       laps_zcount = (np_laps <= ZERO_THRESHOLD).sum()
       laps_nzcount = len(np_laps) - laps_zcount
-      laps_nz_mean = np_laps.sum() / (laps_nzcount + 1e-14)
+      laps_nz_mean = np_laps.sum() / laps_nzcount if laps_nzcount > 0 else -1
       laps_low_cnt = (np_laps <= max(ZERO_THRESHOLD, laps_mean - laps_std)).sum()
       laps_low_prc =  laps_low_cnt / np_laps.shape[0] * 100
     else:
