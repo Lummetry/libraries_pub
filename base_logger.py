@@ -35,7 +35,7 @@ from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '9.0.3.2'
+__VER__ = '9.0.3.3'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -144,8 +144,12 @@ class BaseLogger(object):
     return self.same_script_already_running(verbose=verbose)
   
   def get_conda_env(self):
-    folder = os.environ["CONDA_PREFIX"]
-    env = os.path.split(folder)[-1]
+    folder = os.environ.get("CONDA_PREFIX", None)
+    if folder is not None and len(folder) > 0:
+      try:
+        env = os.path.split(folder)[-1]
+      except:
+        env = None
     return env
 
   def get_active_git_branch(self):
