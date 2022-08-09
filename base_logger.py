@@ -119,6 +119,7 @@ class BaseLogger(object):
     self._check_additional_configs()
     
     self.git_branch = self.get_active_git_branch()
+    self.conda_env = self.get_conda_env()
 
     if lib_ver == "":
       lib_ver = __VER__
@@ -141,6 +142,11 @@ class BaseLogger(object):
   
   def is_running(self, verbose=True):
     return self.same_script_already_running(verbose=verbose)
+  
+  def get_conda_env(self):
+    folder = os.environ["CONDA_PREFIX"]
+    env = os.path.split(folder)[-1]
+    return env
 
   def get_active_git_branch(self):
     fn = './.git/HEAD'
