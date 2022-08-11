@@ -142,27 +142,7 @@ class BaseLogger(object):
   
   def is_running(self, verbose=True):
     return self.same_script_already_running(verbose=verbose)
-  
-  def get_conda_env(self):
-    folder = os.environ.get("CONDA_PREFIX", None)
-    if folder is not None and len(folder) > 0:
-      try:
-        env = os.path.split(folder)[-1]
-      except:
-        env = None
-    return env
-
-  def get_active_git_branch(self):
-    fn = './.git/HEAD'
-    if os.path.isfile(fn):
-      with open(fn, 'r') as f:
-        content = f.readlines()
-      for line in content:
-        if line.startswith('ref:'):
-          return line.partition('refs/heads/')[2].replace('\n','')
-    else:
-      return None
-  
+    
   
   def same_script_already_running(self, verbose=True):
     import psutil
@@ -1161,6 +1141,34 @@ class BaseLogger(object):
   @property
   def is_main_thread(self):
     return threading.current_thread() is threading.main_thread()
+  
+  @staticmethod
+  def get_os_name():
+    import platform
+    return platform.platform()
+    
+  @staticmethod
+  def get_conda_env():
+    folder = os.environ.get("CONDA_PREFIX", None)
+    if folder is not None and len(folder) > 0:
+      try:
+        env = os.path.split(folder)[-1]
+      except:
+        env = None
+    return env
+
+  @staticmethod
+  def get_active_git_branch():
+    fn = './.git/HEAD'
+    if os.path.isfile(fn):
+      with open(fn, 'r') as f:
+        content = f.readlines()
+      for line in content:
+        if line.startswith('ref:'):
+          return line.partition('refs/heads/')[2].replace('\n','')
+    else:
+      return None
+  
   
   def dict_pretty_format(self, d, indent=4, as_str=True, display_callback=None, display=False): 
     if display and display_callback is None:
