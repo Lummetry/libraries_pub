@@ -378,10 +378,9 @@ class BaseLogger(object):
         _color_start = clr
         _color_end = COLORS['__end__']
         if clr is None:
-          print("ERROR: unknown color '{}' - available colors are:".format(color))
-          for k, v in COLORS.items():
-            print(v + k + _color_end)
-          raise ValueError("Invalid color '{}'".format(color))
+          print("ERROR: unknown color '{}' - available colors are: {}".format(
+            color, ', '.join([v + k + _color_end for k, v in COLORS.items()])
+          ))
         else:
           logstr = _color_start + logstr + _color_end
 
