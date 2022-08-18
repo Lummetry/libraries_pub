@@ -30,20 +30,25 @@ class _PluginsManagerMixin:
     super(_PluginsManagerMixin, self).__init__()
     return
 
-  def _get_avail_plugins(self, plugins_location):
-    path = plugins_location.replace('.', '/')
-    files = [os.path.splitext(x)[0] for x in os.listdir(path) if '.py' in x]
-    modules = [plugins_location + '.' + x for x in files]
-    names = [x.replace('__local__', '').replace('_', '').lower() for x in files]
+  def _get_avail_plugins(self, locations):
+    if not isinstance(locations, list):
+      locations = [locations]
+
+    names, modules = [], []
+    for plugins_location in locations:
+      path = plugins_location.replace('.', '/')
+      files = [os.path.splitext(x)[0] for x in os.listdir(path) if '.py' in x]
+      modules += [plugins_location + '.' + x for x in files]
+      names += [x.replace('__local__', '').replace('_', '').lower() for x in files]
+
     return names, modules
 
   def _get_plugin_by_name(self, lst_plugins_locations, name):
     name = name.lower()
-    for plugins_location in lst_plugins_locations:
-      names, modules = self._get_avail_plugins(plugins_location)
-      if name in names:
-        idx = names.index(name)
-        return modules[idx]
+    names, modules = self._get_avail_plugins(lst_plugins_locations)
+    if name in names:
+      idx = names.index(name)
+      return modules[idx]
 
     return
 
