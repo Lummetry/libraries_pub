@@ -52,7 +52,7 @@ class _PluginsManagerMixin:
 
     return
 
-  def _get_module_name_and_class(self, locations, name, suffix=None):
+  def _get_module_name_and_class(self, locations, name, suffix=None, verbose=1):
     if not isinstance(locations, list):
       locations = [locations]
 
@@ -66,7 +66,8 @@ class _PluginsManagerMixin:
 
     _module_name = self._get_plugin_by_name(locations, simple_name)
     if _module_name is None:
-      self.P("Error with finding plugin '{}' in locations '{}'".format(simple_name, locations))
+      if verbose >= 1:
+        self.P("Error with finding plugin '{}' in locations '{}'".format(simple_name, locations))
       return _module_name, _class_name, _cls_def, _config_dict
 
     try:
@@ -76,14 +77,16 @@ class _PluginsManagerMixin:
         if _cls[0].upper() == simple_name.upper() + suffix.upper():
           _class_name, _cls_def = _cls
       if _class_name is None:
-        self.P("ERROR: Could not find class match for {}. Available classes are: {}".format(
-          simple_name, [x[0] for x in classes]
-        ))
+        if verbose >= 1:
+          self.P("ERROR: Could not find class match for {}. Available classes are: {}".format(
+            simple_name, [x[0] for x in classes]
+          ))
       _config_dict = getattr(module, "_CONFIG", None)
     except:
       str_err = traceback.format_exc()
-      self.P("Error preparing {} with module {}:\n{}".format(
-        name, _module_name, str_err
-      ))
+      if verbose >= 1:
+        self.P("Error preparing {} with module {}:\n{}".format(
+          name, _module_name, str_err
+        ))
 
     return _module_name, _class_name, _cls_def, _config_dict

@@ -46,6 +46,7 @@ class LummetryObject(object):
                show_prefixes=False,
                prefix_log=None,
                maxlen_notifications=None,
+               log_at_startup=False,
                **kwargs):
 
     super(LummetryObject, self).__init__()
@@ -58,6 +59,7 @@ class LummetryObject(object):
     self.prefix_log = prefix_log
     self.config_data = self.log.config_data
     self.DEBUG = DEBUG
+    self.log_at_startup = log_at_startup
 
     self._messages = deque(maxlen=maxlen_notifications)
 
@@ -100,8 +102,9 @@ class LummetryObject(object):
       ver = 'v.' + self.__version__
     if hasattr(self,'version'):
       ver = 'v.' + self.version
-      
-    self.P("{}{} startup.".format(self.__class__.__name__, ' ' + ver if ver != '' else ''))
+
+    if self.log_at_startup:
+      self.P("{}{} startup.".format(self.__class__.__name__, ' ' + ver if ver != '' else ''))
     return
 
   def shutdown(self):
