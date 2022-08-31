@@ -35,7 +35,7 @@ from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '9.0.3.4'
+__VER__ = '9.0.3.5'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -169,8 +169,8 @@ class BaseLogger(object):
       from win32event import CreateMutex
       from win32api import GetLastError
       from winerror import ERROR_ALREADY_EXISTS
-      str_lock_name = "Global\\" + str_lock_name.replace("\\"",""")
-      self.P("Attempting to create lock on current Windows process for id '{}'".format(str_lock_name))
+      str_lock_name = "Global\\" + str_lock_name.replace("\\","")
+      self.P("Attempting to create lock on current Windows process for id '{}'".format(str_lock_name), color='m')
       mutex_handle = CreateMutex(None, 1, str_lock_name)
       err = GetLastError()
       if err == ERROR_ALREADY_EXISTS:
@@ -193,7 +193,7 @@ class BaseLogger(object):
         return -1
       else:         
         import socket
-        self.P("Attempting to create lock on current Linux process for id '{}'".format(str_lock_name))
+        self.P("Attempting to create lock on current Linux process for id '{}'".format(str_lock_name), color='m')
         _lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         try:
           _lock_socket.bind('\0' + str_lock_name)
