@@ -35,7 +35,7 @@ from collections import OrderedDict
 from datetime import datetime as dt
 from pathlib import Path
 
-__VER__ = '9.0.3.3'
+__VER__ = '9.0.3.4'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -169,6 +169,7 @@ class BaseLogger(object):
       from win32event import CreateMutex
       from win32api import GetLastError
       from winerror import ERROR_ALREADY_EXISTS
+      str_lock_name = "Global\\" + str_lock_name.replace("\\"",""")
       self.P("Attempting to create lock on current Windows process for id '{}'".format(str_lock_name))
       mutex_handle = CreateMutex(None, 1, str_lock_name)
       err = GetLastError()
