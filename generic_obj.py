@@ -190,3 +190,30 @@ class LummetryObject(object):
     while len(self._messages) > 0:
       lst.append(self._messages.popleft())
     return lst
+  
+  
+  def get_cmd_handlers(self, update=False):
+    if hasattr(self, 'COMMANDS') and isinstance(getattr(self, 'COMMANDS'), dict):
+      COMMANDS = self.COMMANDS.copy()
+    else:
+      COMMANDS = {}
+    for k in dir(self):
+      if k.startswith('cmd_handler_'):
+        cmd = k.replace('cmd_handler_', '').upper()
+        if cmd not in COMMANDS:
+          COMMANDS[cmd] = getattr(self, k)
+    if update:
+      self.COMMANDS = COMMANDS
+    return COMMANDS
+
+
+  def run_cmd(self, cmd, **kwargs):
+    res = None
+    cmd = cmd.upper()
+    dct_cmds = self.get_cmd_handlers()
+    if cmd in dct_cmds:
+      func = dct_cmds[cmd]
+      res = func(**kwargs)
+    else:
+      print("Received unk command '{}'".format(cmd))
+    return res
