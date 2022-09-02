@@ -181,14 +181,8 @@ class _JSONSerializationMixin(object):
     self.thread_safe_save(datafile=datafile, data_json=data_json, locking=locking)
     return datafile
 
-  @staticmethod
-  def save_json(dct, fname):
-    """
-    This function is NOT thread safe
-    """
-    with open(fname, 'w') as fp:
-      json.dump(dct, fp, sort_keys=True, indent=4, cls=NPJson)
-    return
+  def save_json(self, dct, fname, locking=True):
+    return self.thread_safe_save(datafile=fname, data_json=dct, locking=locking)
 
   def load_dict_from_data(self, fn):
     return self.load_data_json(fn)
