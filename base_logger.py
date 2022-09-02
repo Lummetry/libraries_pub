@@ -171,8 +171,14 @@ class BaseLogger(object):
       from winerror import ERROR_ALREADY_EXISTS
       str_lock_name = "Global\\" + str_lock_name.replace("\\","")
       self.P("Attempting to create lock on current Windows process for id '{}'".format(str_lock_name), color='m')
-      mutex_handle = CreateMutex(None, 1, str_lock_name)
-      err = GetLastError()
+      
+      try:
+        mutex_handle = CreateMutex(None, 1, str_lock_name)
+        err = GetLastError()
+      except:
+        self.P("Exception in process locking id '{}'".format(str_lock_name), color='r')
+        err = ERROR_ALREADY_EXISTS
+        
       if err == ERROR_ALREADY_EXISTS:
         # maybe show some text
         self.P("Another Windows process has already acquired id '{}'".format(str_lock_name), color='r')
