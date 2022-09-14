@@ -147,8 +147,8 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
       err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
       self.__encountered_error = err_dict['ERR_MSG']
       self._create_notification(
-        notification_type='exception',
-        notification='Exception in _pre_process:\n{}'.format(err_dict)
+        notif='exception',
+        msg='Exception in _pre_process:\n{}'.format(err_dict)
       )
       return
 
@@ -164,8 +164,8 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
       err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
       self.__encountered_error = err_dict['ERR_MSG']
       self._create_notification(
-        notification_type='exception',
-        notification='Exception in _predict:\n{}'.format(err_dict)
+        notif='exception',
+        msg='Exception in _predict:\n{}'.format(err_dict)
       )
       return
 
@@ -181,8 +181,8 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
       err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
       self.__encountered_error = err_dict['ERR_MSG']
       self._create_notification(
-        notification_type='exception',
-        notification='Exception in _post_process\n{}'.format(err_dict)
+        notif='exception',
+        msg='Exception in _post_process\n{}'.format(err_dict)
       )
       return
 
@@ -219,7 +219,7 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
 
     return answer
 
-  def _create_notification(self, notification_type, notification):
-    notification = (self._counter or "INIT", notification)
-    super()._create_notification(notification_type=notification_type, notification=notification)
+  def _create_notification(self, notif, msg, info=None, stream_name=None, **kwargs):
+    msg = (self._counter or "INIT", msg)
+    super()._create_notification(notif=notif, msg=msg, info=info, stream_name=stream_name, **kwargs)
     return

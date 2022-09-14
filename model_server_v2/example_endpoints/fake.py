@@ -68,8 +68,8 @@ class FakeWorker(FlaskWorker):
     ### see docstring in parent
     ### abstract method implementation: "in-memory model :)" that adds and subtracts.
     self._create_notification(
-      notification_type='log',
-      notification='Predicting on usr_input: {}'.format(prep_inputs)
+      notif='log',
+      msg='Predicting on usr_input: {}'.format(prep_inputs)
     )
 
     if not self.cfg_minus:

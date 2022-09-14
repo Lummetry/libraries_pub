@@ -209,14 +209,14 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
       for _ in range(nr_new_workers):
         self._create_worker()
       str_msg = "Created {} new workers. (were:{}, total:{})".format(nr_new_workers, nr_crt_workers, nr_workers)
-      self._create_notification(notification_type='log', notification=str_msg)
+      self._create_notification(notif='log', msg=str_msg)
     elif nr_new_workers < 0:
       ###TODO delete only unused
       str_msg = "Should delete {} - not implemented yet".format(-1*nr_new_workers)
-      self._create_notification(notification_type='log', notification=str_msg)
+      self._create_notification(notif='log', msg=str_msg)
     else:
       str_msg = "Update with no effect, there are already {} workers".format(nr_workers)
-      self._create_notification(notification_type='log', notification=str_msg)
+      self._create_notification(notif='log', msg=str_msg)
     #endif
     return
 
@@ -270,8 +270,8 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     client = params.get('client', 'unk')
 
     self._create_notification(
-      notification_type='log',
-      notification=(self._counter, "Received '{}' request {} from client '{}' params: {}".format(
+      notif='log',
+      msg=(self._counter, "Received '{}' request {} from client '{}' params: {}".format(
         method, self._counter, client, params
       ))
     )

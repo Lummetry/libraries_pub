@@ -170,19 +170,21 @@ class LummetryObject(object):
       tn = '{}__{}'.format(self.__class__.__name__, name)
     return tn
 
-  def _create_notification(self, notification_type, notification, **kwargs):
-    message = {
+  def _create_notification(self, notif, msg, info=None, stream_name=None, **kwargs):
+    body = {
       'MODULE': self.__class__.__name__
     }
 
     if hasattr(self, '__version__'):
-      message['VERSION'] = self.__version__
+      body['VERSION'] = self.__version__
 
-    message['NOTIFICATION_TYPE'] = notification_type
-    message['NOTIFICATION'] = notification
-    message['TIMESTAMP'] = self.log.now_str(nice_print=True, short=False)
-    message = {**message, **kwargs}
-    self._messages.append(message)
+    body['NOTIFICATION_TYPE'] = notif
+    body['NOTIFICATION'] = msg[:255]
+    body['INFO'] = info
+    body['STREAM_NAME'] = stream_name
+    body['TIMESTAMP'] = self.log.now_str(nice_print=True, short=False)
+    body = {**body, **kwargs}
+    self._messages.append(body)
     return
 
   def get_notifications(self):
