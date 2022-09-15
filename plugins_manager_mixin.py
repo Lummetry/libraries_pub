@@ -37,9 +37,9 @@ class _PluginsManagerMixin:
     names, modules = [], []
     for plugins_location in locations:
       path = plugins_location.replace('.', '/')
-      files = [os.path.splitext(x)[0] for x in os.listdir(path) if '.py' in x]
+      files = [os.path.splitext(x)[0] for x in os.listdir(path) if '.py' in x and '__init__' not in x]
       modules += [plugins_location + '.' + x for x in files]
-      names += [x.replace('__local__', '').replace('_', '').lower() for x in files]
+      names += [x.replace('_', '').lower() for x in files]
 
     return names, modules
 
