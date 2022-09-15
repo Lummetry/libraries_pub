@@ -24,6 +24,7 @@ Copyright 2019 Lummetry.AI (Knowledge Investment Group SRL). All Rights Reserved
 from libraries import Logger
 from collections import deque
 from datetime import datetime as dt
+import traceback
 
 class LummetryObject(object):
   """
@@ -170,13 +171,20 @@ class LummetryObject(object):
       tn = '{}__{}'.format(self.__class__.__name__, name)
     return tn
 
-  def _create_notification(self, notif, msg, info=None, stream_name=None, **kwargs):
+  def _create_notification(self, notif, msg, info=None, stream_name=None, autocomplete_info=False, **kwargs):
     body = {
       'MODULE': self.__class__.__name__
     }
 
     if hasattr(self, '__version__'):
       body['VERSION'] = self.__version__
+
+    if autocomplete_info and info is None:
+      info = "* Log error info:\n{}\n* Traceback:\n{}".format(
+        self.log.get_error_info(return_err_val=True),
+        traceback.format_exc()
+      )
+    #endif
 
     body['NOTIFICATION_TYPE'] = notif
     body['NOTIFICATION'] = msg[:255]

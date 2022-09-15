@@ -67,7 +67,7 @@ class _PluginsManagerMixin:
     _module_name = self._get_plugin_by_name(locations, simple_name)
     if _module_name is None:
       if verbose >= 1:
-        self.P("Error with finding plugin '{}' in locations '{}'".format(simple_name, locations))
+        self.P("Error with finding plugin '{}' in locations '{}'".format(simple_name, locations), color='r')
       return _module_name, _class_name, _cls_def, _config_dict
 
     try:
@@ -80,13 +80,13 @@ class _PluginsManagerMixin:
         if verbose >= 1:
           self.P("ERROR: Could not find class match for {}. Available classes are: {}".format(
             simple_name, [x[0] for x in classes]
-          ))
+          ), color='r')
       _config_dict = getattr(module, "_CONFIG", None)
     except:
       str_err = traceback.format_exc()
       if verbose >= 1:
         self.P("Error preparing {} with module {}:\n{}".format(
           name, _module_name, str_err
-        ))
+        ), color='r')
 
     return _module_name, _class_name, _cls_def, _config_dict
