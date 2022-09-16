@@ -51,8 +51,17 @@ class _PluginsManagerMixin:
       return modules[idx]
 
     return
+  
+  def _perform_safety_check(self, module):
+    good = True
+    str_code = inspect.getsource(module)
+    self.P("Performing code safety check on {}:".format(module.__name__), color='m')
+    ### TODO: finish code analysis using BaseCodeChecker
+    
+    ###
+    return good
 
-  def _get_module_name_and_class(self, locations, name, suffix=None, verbose=1):
+  def _get_module_name_and_class(self, locations, name, suffix=None, verbose=1, safety_check=False):
     if not isinstance(locations, list):
       locations = [locations]
 
@@ -72,6 +81,9 @@ class _PluginsManagerMixin:
 
     try:
       module = importlib.import_module(_module_name)
+      if module is not None and safety_check:
+        if not self._perform_safety_check(module):
+          raise ValueError("Unsafe code detected in module '{}'".format(module.__name__))
       classes = inspect.getmembers(module, inspect.isclass)
       for _cls in classes:
         if _cls[0].upper() == simple_name.upper() + suffix.upper():
