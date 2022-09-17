@@ -23,8 +23,9 @@ Copyright 2019 Lummetry.AI (Knowledge Investment Group SRL). All Rights Reserved
 
 from libraries import Logger
 from collections import deque
-from datetime import datetime as dt
 import traceback
+
+
 
 class LummetryObject(object):
   """
@@ -227,3 +228,4 @@ class LummetryObject(object):
     else:
       print("Received unk command '{}'".format(cmd))
     return res
+  
