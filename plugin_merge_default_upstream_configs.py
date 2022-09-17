@@ -14,14 +14,37 @@ Copyright 2019-2022 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 
 
 @copyright: Lummetry.AI
-@author: Lummetry.AI - Laurentiu
+@author: Lummetry.AI 
 @project: 
 @description:
+  
+
+TODO: 
+  this should be _ConfigHandlerMixin and should deal with multiple config-related 
+  aspects in any config_data using class including LummetryObject !!!
+  as a rule-of-the-thumb this mixin should be used as:
+    - add_config_data(dct_config) - this will append/update new config to the config_data
+    - create_config_handlers - after we have final config_data we can create implicit `cfg_` handlers
+    - validation  & run_validation_rules - finally check if all is ok
+  
+  
 """
 from copy import deepcopy
 
-# TODO: this should be _ConfigHandlerMixin and should deal with multiple config-related 
-# aspects in any config_data using class including LummetryObject !!!
+class CONST:
+  RULES = 'VALIDATION_RULES'
+  TYPE = 'TYPE'
+  FUNC = '_cfg_validate_'
+  MIN_VAL = 'MIN_VAL'
+  MAX_VAL = 'MAX_VAL'
+  MIN_LEN = 'MIN_LEN'
+  EXCLUDED_LIST = 'EXCLUDED_LIST'
+  
+
+from functools import partial
+def getter(slf, obj=None, key=None):
+  return obj.config_data.get(key)
+
 class _PluginMergeDefaultAndUpstreamConfigs(object):
 
   def __init__(self):
@@ -83,24 +106,139 @@ class _PluginMergeDefaultAndUpstreamConfigs(object):
     return True
 
   
-  def create_config_handlers(self):
+  def create_config_handlers(self):    
     if hasattr(self, 'config_data') and isinstance(self.config_data, dict) and len(self.config_data) > 0:
+      res = []
       for k in self.config_data:
         func_name = 'cfg_' + k.lower()
         if not hasattr(self, func_name):
-          fnc = property(fget=lambda self: self.config_data.get(k), doc="Get '{}' from config_data".format(k))
-          setattr(self.__class__, func_name, fnc)
+          fnc = partial(getter, obj=self, key=k)
+          cls = type(self)
+          fnc_prop = property(fget=fnc, doc="Get '{}' from config_data".format(k))
+          setattr(cls, func_name, fnc_prop)
+          res.append(func_name)
+      if len(res) > 0:
+        self.P("Created '{}' config_data handlers: {}".format(self.__class__.__name__, res), color='b')
     return
   
   
+  def _cfg_check_type(self, cfg_key, types):
+    val = self.config_data.get(cfg_key)
+    if not isinstance(val, types):
+      msg = "'{}' config key '{}={}' requires type {} ".format(
+        self.__class__.__name__, cfg_key, val, types,
+      )
+      return False, msg
+    return True, ''
+  
+  def _cfg_check_min_max(self, cfg_key, dct_rules):
+    res = True
+    msg = None
+    _min = dct_rules.get(CONST.MIN_VAL)
+    _max = dct_rules.get(CONST.MAX_VAL)
+    val = self.config_data.get(cfg_key)
+    if _min is not None and val < _min:
+      msg = "'{}' config key '{}={}' of type {} requires value > {}".format(
+        self.__class__.__name__, cfg_key, val, dct_rules.get(CONST.TYPE), _min,
+      )
+      return False, msg
+    
+    if _max is not None and val > _max:
+      msg = "'{}' config key '{}={}' of type {} requires value < {}".format(
+        self.__class__.__name__, cfg_key, val, dct_rules.get(CONST.TYPE),  _max,
+      )
+      return False, msg
+    return res, msg
+  
+  def _cfg_validate_int(self, cfg_key, dct_rules):
+    res1, msg1 = self._cfg_check_type(cfg_key=cfg_key, types=(int,))
+    res2, msg2 = self._cfg_check_min_max(cfg_key=cfg_key, dct_rules=dct_rules)
+    res = res1 and res2      
+    msg = msg1 if not res1 else msg2
+    return res, msg
+  
+  def _cfg_validate_float(self, cfg_key, dct_rules):    
+    res1, msg1 = self._cfg_check_type(cfg_key=cfg_key, types=(int,float))
+    res2, msg2 = self._cfg_check_min_max(cfg_key=cfg_key, dct_rules=dct_rules)
+    res = res1 and res2      
+    msg = msg1 if not res1 else msg2
+    return res, msg
+  
+  
+  def _cfg_validate_str(self, cfg_key, dct_rules):
+    res2, res3 = True, True
+    msg2, msg3 = None, None
+    _min_len = dct_rules.get(CONST.MIN_LEN, 0)
+    _excl_lst = dct_rules.get(CONST.EXCLUDED_LIST)
+    val = self.config_data.get(cfg_key)
+    res1, msg1 = self._cfg_check_type(cfg_key=cfg_key, types=(str,))
+    if _excl_lst is not None and val in _excl_lst:
+      msg2 = "'{}' config key '{}={}' of type {} in exclusion list{}".format(
+        self.__class__.__name__, cfg_key, val, dct_rules.get(CONST.TYPE), _excl_lst,
+      )
+      res2 = False
+    if _min_len is not None and len(val) < _min_len:
+      msg3 = "'{}' config key '{}={}' of type {} must have at least {} chars".format(
+        self.__class__.__name__, cfg_key, val, dct_rules.get(CONST.TYPE), _min_len,
+      )
+      res3 = False
+    res = res1 and res2 and res3
+    msg = msg1 if not res1 else (msg2 if not res2 else msg3)
+    return res, msg      
+    
+    
+  
   def run_validation_rules(self):
     result = True
+    self.P("Validating configuration for '{}'...".format(self.__class__.__name__), color='b')
     if (hasattr(self, 'config_data') and 
         isinstance(self.config_data, dict) and 
-        self.config_data.get('VALIDATION_RULES') is not None and
-        len(self.config_data.get('VALIDATION_RULES')) > 0):
-      self.P("Validating configuration for '{}'...".format(self.__class__.__name__))
+        self.config_data.get(CONST.RULES) is not None and
+        len(self.config_data.get(CONST.RULES)) > 0):
+      dct_validation = self.config_data.get(CONST.RULES)
+      for k in dct_validation:
+        if k not in self.config_data:
+          self.P("  Key '{}' not found in config_data", color='r')
+          continue
+        dct_rules = dct_validation.get(k, {})
+        if len(dct_rules) > 0:
+          str_type= dct_rules.get(CONST.TYPE)
+          if isinstance(str_type, str) and len(str_type) > 1:
+            _type = eval(str_type)
+          else:
+            self.P("  No TYPE information found for '{}'".format(k), color='r')       
+          if False:
+            self.P("  Processing key '{}' of type '{}'".format(k, _type.__name__))#DELETE
+          if _type in [int, float, str, dict, list]:
+            str_func = CONST.FUNC + _type.__name__
+            func = getattr(self, str_func, None)
+            res = True
+            if func is None:
+              # if we use a predefined type then we must have the validation
+              self.P("  No handler for '{}' config key validation".format(_type.__name__), color='r')
+              # maybe we can put res = False here?
+            else:
+              msg = ''
+              res = func(k, dct_rules)
+              if isinstance(res, tuple):
+                res, msg = res
+            if not res:
+              self.P("  Config validation for '{}={}' of '{}' failed: {}".format(
+                k, self.config_data.get(k), self.__class__.__name__, msg),
+                color='r'
+              )
+              result = False
+              # here we can break for but we leave to see what other error we have 
+          else:
+            self.P("  Unknown type '{}' for '{}'".format(_type, k), color='r')       
+        else:
+          self.P("  Empty rules info for '{}'".format(k))
+        # end if rules parsing
+      # end for each key validation 
+      self.P("  Validation for '{}' is {}successful".format(
+        self.__class__.__name__, '' if result else 'NOT ',
+      ), color='g' if result else 'r')
     else:
-      self.P("No validation configuration for '{}'".format(self.__class__.__name__), color='r')
+      self.P("  No validation configuration for '{}'".format(self.__class__.__name__), color='r')
       result = False
     return result
