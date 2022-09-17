@@ -112,10 +112,13 @@ class _PluginMergeDefaultAndUpstreamConfigs(object):
       for k in self.config_data:
         func_name = 'cfg_' + k.lower()
         if not hasattr(self, func_name):
-          fnc = partial(getter, obj=self, key=k)
-          cls = type(self)
-          fnc_prop = property(fget=fnc, doc="Get '{}' from config_data".format(k))
-          setattr(cls, func_name, fnc_prop)
+          # below is a bit tricky: using a lambda generates a non-deterministic abnormal behavior
+          # the ideea is to create a global func instance that wil be then loaded on the class (not instance)
+          # as a descriptor object - ie a `property`. "many Bothans died to bring the plans of the Death Star..."
+          fnc = partial(getter, obj=self, key=k) # create the func
+          cls = type(self) # get the class
+          fnc_prop = property(fget=fnc, doc="Get '{}' from config_data".format(k)) # create prop from func 
+          setattr(cls, func_name, fnc_prop) # set the prop of the class
           res.append(func_name)
       if len(res) > 0:
         self.P("Created '{}' config_data handlers: {}".format(self.__class__.__name__, res), color='b')
