@@ -152,6 +152,17 @@ class _PluginMergeDefaultAndUpstreamConfigs(object):
       )
       return False, msg
     return res, msg
+
+  def _cfg_check_exclusions(self, cfg_key, dct_rules):
+    _excl_lst = dct_rules.get(CONST.EXCLUDED_LIST)
+    val = self.config_data.get(cfg_key)
+    if _excl_lst is not None and val in _excl_lst:
+      msg = "'{}' config key '{}={}' found in exclutions {}".format(
+        self.__class__.__name__, cfg_key, val, _excl_lst,
+      )
+      return False, msg
+    return True, ''
+
   
   def _cfg_validate_int(self, cfg_key, dct_rules):
     res1, msg1 = self._cfg_check_type(cfg_key=cfg_key, types=(int,))
@@ -169,17 +180,12 @@ class _PluginMergeDefaultAndUpstreamConfigs(object):
   
   
   def _cfg_validate_str(self, cfg_key, dct_rules):
-    res2, res3 = True, True
-    msg2, msg3 = None, None
-    _min_len = dct_rules.get(CONST.MIN_LEN, 0)
-    _excl_lst = dct_rules.get(CONST.EXCLUDED_LIST)
-    val = self.config_data.get(cfg_key)
     res1, msg1 = self._cfg_check_type(cfg_key=cfg_key, types=(str,))
-    if _excl_lst is not None and val in _excl_lst:
-      msg2 = "'{}' config key '{}={}' of type {} in exclusion list{}".format(
-        self.__class__.__name__, cfg_key, val, dct_rules.get(CONST.TYPE), _excl_lst,
-      )
-      res2 = False
+    res2, msg2 = self._cfg_check_exclusions(cfg_key=cfg_key, dct_rules=dct_rules)
+
+    msg3 = None
+    val = self.config_data.get(cfg_key)
+    _min_len = dct_rules.get(CONST.MIN_LEN, 0)
     if _min_len is not None and len(val) < _min_len:
       msg3 = "'{}' config key '{}={}' of type {} must have at least {} chars".format(
         self.__class__.__name__, cfg_key, val, dct_rules.get(CONST.TYPE), _min_len,
