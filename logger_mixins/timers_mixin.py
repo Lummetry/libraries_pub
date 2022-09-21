@@ -21,7 +21,7 @@ Copyright 2019-2022 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 import numpy as np
 
 from collections import OrderedDict, deque
-from time import perf_counter
+from time import perf_counter, time
 
 
 DEFAULT_SECTION = 'main'
@@ -29,6 +29,8 @@ DEFAULT_THRESHOLD_NO_SHOW = 0
 
 MAX_LAPS = 1_000
 ZERO_THRESHOLD = 5e-4
+
+OBSOLETE_SECTION_TIME = 3600 # sections older than 1 hour are archived
 
 class _TimersMixin(object):
   """
@@ -44,6 +46,7 @@ class _TimersMixin(object):
     super(_TimersMixin, self).__init__()
     self.timers = None
     self.timer_level = None
+    self.sections_last_used = {}
     self.opened_timers = None
     self.timers_graph = None
     self._timer_error = None
@@ -172,6 +175,7 @@ class _TimersMixin(object):
     if sname not in self.timers[section]:
       return
     result = 0
+    self.sections_last_used[section] = time()
     if self.DEBUG:
       self.opened_timers[section].pop()
       self.timer_level[section] -= 1
@@ -359,10 +363,18 @@ class _TimersMixin(object):
       if add_back_default_section:
         keys = [DEFAULT_SECTION] + keys
 
+      old_sections = []
       for section in keys:
+        if section in self.sections_last_used and (time() - self.sections_last_used[section]) > OBSOLETE_SECTION_TIME:
+          old_sections.append(section)
+          continue
         lst_logs.append("Section '{}'".format(section))
         buffer_visited = set()
         dfs(buffer_visited, self.timers_graph[section], "ROOT", True, lst_logs, section)
+      if len(old_sections) > 0:
+        lst_logs.append("Archived sections older than {:.1f} hrs: {}".format(
+          OBSOLETE_SECTION_TIME / 3600, old_sections
+        ))
     else:
       self.verbose_log("DEBUG not activated!")
     return lst_logs
