@@ -366,10 +366,15 @@ class _TimersMixin(object):
 
       old_sections = []
       for section in keys:
-        if section in self.sections_last_used and (time() - self.sections_last_used[section]) > OBSOLETE_SECTION_TIME:
-          old_sections.append(section)
-          continue
-        lst_logs.append("Section '{}'".format(section))
+        last_see_ago = None
+        if section in self.sections_last_used:
+          last_see_ago = time() - self.sections_last_used[section]
+          if last_see_ago > OBSOLETE_SECTION_TIME:
+            old_sections.append(section)
+            continue
+        lst_logs.append("Section '{}'{}".format(
+          section, " last seen {:.1f}s ago".format(last_see_ago) if last_see_ago is not None else ""
+        ))
         buffer_visited = set()
         dfs(buffer_visited, self.timers_graph[section], "ROOT", True, lst_logs, section)
       if len(old_sections) > 0:
@@ -414,6 +419,7 @@ class _TimersMixin(object):
       return False
     self.timers[section] = dct_timers
     self.timers_graph[section] = dct_timers_graph
+    self.sections_last_used[section] = time()
     return True
   
   def export_timers_section(self, section=None):
