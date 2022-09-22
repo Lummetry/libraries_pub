@@ -45,7 +45,7 @@ class _TimersMixin(object):
   def __init__(self):
     super(_TimersMixin, self).__init__()
     self.timers = None
-    self.timer_level = None
+    self.timer_level = None # no actual purpose following addition of graph
     self.sections_last_used = {}
     self.opened_timers = None
     self.timers_graph = None
@@ -404,3 +404,23 @@ class _TimersMixin(object):
     tmr = self.get_timer(skey, section=section)
     result = tmr.get('COUNT', 0)
     return result
+  
+  def import_timers_section(self, dct_timers, dct_timers_graph, section):
+    if section in self.timers:
+      self.P("WARNING: Cannot import section '{}' with {} timers as there is already a existing section".format(
+        section, len(dct_timers)
+      ), color='r')
+      return False
+    self.timers[section] = dct_timers
+    self.timers_graph[section] = dct_timers_graph
+    return True
+  
+  def export_timers_section(self, section):
+    if section not in self.timers:
+      self.P("WARNING: Cannot export unexisting timers section '{}'".format(
+        section
+      ), color='r')
+      return None, None
+    dct_timers = self.timers[section]
+    dct_timers_graph = self.timers_graph[section]
+    return dct_timers, dct_timers_graph
