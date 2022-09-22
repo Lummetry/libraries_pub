@@ -50,12 +50,13 @@ class _TimersMixin(object):
     self.opened_timers = None
     self.timers_graph = None
     self._timer_error = None
+    self.default_timers_section = DEFAULT_SECTION
 
     self.reset_timers()
     return
 
   def _maybe_create_timers_section(self, section=None):
-    section = section or DEFAULT_SECTION
+    section = section or self.default_timers_section
 
     if section in self.timers:
       return
@@ -96,12 +97,12 @@ class _TimersMixin(object):
     }
 
   def restart_timer(self, sname, section=None):
-    section = section or DEFAULT_SECTION
+    section = section or self.default_timers_section
     self.timers[section][sname] = self.get_empty_timer()
     return
 
   def _add_in_timers_graph(self, sname, section=None):
-    section = section or DEFAULT_SECTION
+    section = section or self.default_timers_section
     self.timers[section][sname]['LEVEL'] = self.timer_level[section]
     if sname not in self.timers_graph[section]:
       self.timers_graph[section][sname] = {"SLOW" : OrderedDict(), "FAST" : OrderedDict()}
@@ -110,8 +111,8 @@ class _TimersMixin(object):
     return
 
   def start_timer(self, sname, section=None):
-    section = section or DEFAULT_SECTION
-    if section == DEFAULT_SECTION:
+    section = section or self.default_timers_section
+    if section == self.default_timers_section:
       assert self.is_main_thread, "Attempted to run threaded timer '{}' without section".format(sname)
 
     self._maybe_create_timers_section(section)
@@ -149,7 +150,7 @@ class _TimersMixin(object):
     return curr_time
 
   def get_time_until_now(self, sname, section=None):
-    section = section or DEFAULT_SECTION
+    section = section or self.default_timers_section
     ctimer = self.timers[section][sname]
     return perf_counter() - ctimer['START']
 
@@ -160,7 +161,7 @@ class _TimersMixin(object):
     return dct_faulty
 
   def _get_section_faulty_timers(self, section=None):
-    section = section or DEFAULT_SECTION
+    section = section or self.default_timers_section
     lst_faulty = []
     for tmr_name, tmr in self.timers[section].items():
       if (tmr['START_COUNT'] - tmr['STOP_COUNT']) > 1:
@@ -171,7 +172,7 @@ class _TimersMixin(object):
     return self.end_timer(sname, skip_first_timing=False, section=section)
 
   def end_timer(self, sname, skip_first_timing=False, section=None):
-    section = section or DEFAULT_SECTION
+    section = section or self.default_timers_section
     if sname not in self.timers[section]:
       return
     result = 0
@@ -205,7 +206,7 @@ class _TimersMixin(object):
     return self.end_timer(sname=sname, skip_first_timing=skip_first_timing, section=section)
 
   def show_timer_total(self, sname, section=None):
-    section = section or DEFAULT_SECTION
+    section = section or self.default_timers_section
     ctimer = self.timers[section][sname]
     cnt = ctimer['COUNT']
     val = ctimer['MEAN'] * cnt
@@ -356,12 +357,12 @@ class _TimersMixin(object):
         keys = selected_sections
 
       add_back_default_section = False
-      if DEFAULT_SECTION in keys:
+      if self.default_timers_section in keys:
         add_back_default_section = True
-        keys.pop(keys.index(DEFAULT_SECTION))
+        keys.pop(keys.index(self.default_timers_section))
       keys.sort()
       if add_back_default_section:
-        keys = [DEFAULT_SECTION] + keys
+        keys = [self.default_timers_section] + keys
 
       old_sections = []
       for section in keys:
@@ -380,7 +381,7 @@ class _TimersMixin(object):
     return lst_logs
 
   def get_timing_dict(self, skey, section=None):
-    section = section or DEFAULT_SECTION
+    section = section or self.default_timers_section
     timers_section = self.timers.get(section, {})
     dct = timers_section.get(skey, {})
     return dct
@@ -405,8 +406,8 @@ class _TimersMixin(object):
     result = tmr.get('COUNT', 0)
     return result
   
-  def import_timers_section(self, dct_timers, dct_timers_graph, section):
-    if section in self.timers:
+  def import_timers_section(self, dct_timers, dct_timers_graph, section, overwrite=False):
+    if section in self.timers and not overwrite:
       self.P("WARNING: Cannot import section '{}' with {} timers as there is already a existing section".format(
         section, len(dct_timers)
       ), color='r')
@@ -415,7 +416,8 @@ class _TimersMixin(object):
     self.timers_graph[section] = dct_timers_graph
     return True
   
-  def export_timers_section(self, section):
+  def export_timers_section(self, section=None):
+    section = section or self.default_timers_section
     if section not in self.timers:
       self.P("WARNING: Cannot export unexisting timers section '{}'".format(
         section
