@@ -34,6 +34,7 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
   def __init__(self, log : Logger,
                default_config,
                verbosity_level,
+               worker_id,
                upstream_config=None,
                **kwargs):
 
@@ -50,6 +51,9 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
     verbosity_level: int, mandatory
       A threshold that controls the verbosity - can use it in any implementation
 
+    worker_id : int, mandatory
+      The id of the worker.
+
     upstream_config: dict, optional
       The upstream configuration that comes from a configuration file of the process; this `upstream_config` is merged with `default_config`
       in order to compute the final config
@@ -59,12 +63,13 @@ class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
     self._default_config = default_config
     self._upstream_config_params = upstream_config or {}
     self.config_worker = None
+    self._worker_id = worker_id
 
     self._verbosity_level = verbosity_level
 
     self._counter = None
     self.__encountered_error = None
-    super(FlaskWorker, self).__init__(log=log, maxlen_notifications=1000, **kwargs)
+    super(FlaskWorker, self).__init__(log=log, maxlen_notifications=1000, prefix_log='[FSKWKR]', **kwargs)
     return
 
   def startup(self):

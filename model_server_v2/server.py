@@ -110,6 +110,7 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     self._counter = 0
 
     self._lock = Lock()
+    self._lock_counter = Lock()
     self._paths = None
 
     super(FlaskModelServer, self).__init__(log=log, prefix_log='[FSKSVR]', maxlen_notifications=1000)
@@ -190,10 +191,13 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     if _cls_def is None:
       return
 
+    worker_id = len(self._mask_workers_in_use)
+
     worker = _cls_def(
       log=self.log,
       default_config=_config_dict,
       verbosity_level=self._verbosity_level,
+      worker_id=worker_id,
       upstream_config=self._config_endpoint
     )
 
@@ -227,11 +231,11 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
   def _mask_worker_unlocked(self, wid):
     self._mask_workers_in_use[wid] = 0
 
-  def _find_unlocked_worker(self):
+  def _find_unlocked_worker(self, counter):
     self._lock.acquire()
     unlocked_workers = np.where(np.array(self._mask_workers_in_use) == 0)[0]
-
     if unlocked_workers.shape[0] == 0:
+      self._lock.release()
       return
 
     wid = int(np.random.choice(unlocked_workers))
@@ -239,14 +243,14 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     self._lock.release()
     return wid
 
-  def _wait_predict(self, data):
-    wid = self._find_unlocked_worker()
+  def _wait_predict(self, data, counter):
+    wid = self._find_unlocked_worker(counter)
     if wid is None:
       # All model servers in use. Waiting...
 
       while wid is None:
         sleep(1)
-        wid = self._find_unlocked_worker()
+        wid = self._find_unlocked_worker(counter)
       #endwhile
 
       # Waiting done.
@@ -256,13 +260,16 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     worker = self._lst_workers[wid]
     answer = worker.execute(
       inputs=data,
-      counter=self._counter
+      counter=counter
     )
     self._mask_worker_unlocked(wid)
     return worker, answer, wid
 
   def _view_func_plugin_endpoint(self):
+    self._lock_counter.acquire()
     self._counter += 1
+    counter = self._counter
+    self._lock_counter.release()
     request = flask.request
     method = request.method
 
@@ -271,14 +278,14 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
     self._create_notification(
       notif='log',
-      msg=(self._counter, "Received '{}' request {} from client '{}' params: {}".format(
-        method, self._counter, client, params
+      msg=(counter, "Received '{}' request {} from client '{}' params: {}".format(
+        method, counter, client, params
       ))
     )
 
     worker, wid = None, -1
     if method != 'OPTIONS':
-      worker, answer, wid = self._wait_predict(data=params)
+      worker, answer, wid = self._wait_predict(data=params, counter=counter)
     else:
       answer = {}
 
@@ -286,12 +293,12 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
       jresponse = flask.jsonify({
         "ERROR": "input json does not contain right info or other error has occured",
         "client": client,
-        "call_id": self._counter,
+        "call_id": counter,
         "input": params
       })
     else:
       if isinstance(answer, dict):
-        answer['call_id'] = self._counter
+        answer['call_id'] = counter
         if worker:
           answer['signature'] = '{}:{}'.format(worker.__class__.__name__, wid)
         jresponse = flask.jsonify(answer)
