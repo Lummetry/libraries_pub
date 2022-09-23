@@ -23,9 +23,9 @@ import abc
 
 from libraries import Logger
 from libraries import LummetryObject
-from libraries import _PluginMergeDefaultAndUpstreamConfigs
+from libraries import _ConfigHandlerMixin
 
-class FlaskWorker(LummetryObject, _PluginMergeDefaultAndUpstreamConfigs):
+class FlaskWorker(LummetryObject, _ConfigHandlerMixin):
 
   """
   Base class for any worker / endpoint business logic
