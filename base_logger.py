@@ -33,6 +33,7 @@ import threading
 from time import time as tm
 from collections import OrderedDict
 from datetime import datetime as dt
+from datetime import timedelta
 from pathlib import Path
 
 __VER__ = '9.5.0'
@@ -275,6 +276,29 @@ class BaseLogger(object):
   @property
   def session_id(self):
     return self.file_prefix
+  
+  
+  def cleanup_logs(self, days=10):
+    self.P("Cleanup logs...", color='y')
+    str_old_date = (dt.today() - timedelta(days=days)).strftime('%Y%m%d')
+    int_old_date = int(str_old_date)
+    logs = os.listdir(self._logs_dir)
+    for fn in logs:
+      if fn[-4:] == '.txt':
+        str_date = fn[:8]
+        int_date = None
+        if len(str_date) > 8:
+          try:
+            int_date = int(str_date)
+          except:
+            pass
+        if int_date is not None and int_date <= int_old_date:
+          self.P("  Deleting old log file '{}'".format(fn), color='y')
+          full_fn = os.path.join(self._logs_dir, fn)
+          os.remove(full_fn)
+    return
+                    
+
 
   def _logger(self, logstr, show=True, noprefix=False, show_time=False, color=None):
     """
