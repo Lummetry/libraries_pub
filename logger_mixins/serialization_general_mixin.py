@@ -171,3 +171,47 @@ class _GeneralSerializationMixin(object):
     elif extension == '.pkl':
       with open(path, 'wb') as handle:
         pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+  
+  
+  def add_file_to_zip(self, path_zip, path_file):
+    try:
+      from zipfile import ZipFile, ZIP_DEFLATED
+      if not os.path.isfile(path_file):
+        self.P("Adding to zip '{}' failed: missing '{}' ".format(path_zip, path_file), color='r')
+        return
+      zip = ZipFile(
+        file=path_zip, 
+        mode='a', 
+        compression=ZIP_DEFLATED
+      )
+      self.P("Archiving (zip) '{}' => {}".format(path_file, path_zip), color='y')
+      zip.write(path_file, arcname=os.path.basename(path_file))
+      zip.close()
+    except Exception as e:
+      self.P("Exception occured while archiving '{}' in '{}': {}".format(
+        path_file, path_zip, e), color='r'
+      )
+      return
+    return path_zip
+    
+  def add_files_to_zip(self, path_zip, files):
+    try:
+      from zipfile import ZipFile, ZIP_DEFLATED
+      zip = ZipFile(
+        file=path_zip, 
+        mode='a', 
+        compression=ZIP_DEFLATED
+      )
+      for path_file in files:
+        if not os.path.isfile(path_file):
+          self.P("Adding to zip '{}' failed: missing '{}' ".format(path_zip, path_file), color='r')
+          continue
+        self.P("Archiving (zip) '{}' => {}".format(path_file, path_zip), color='y')
+        zip.write(path_file, arcname=os.path.basename(path_file))
+      zip.close()
+    except Exception as e:
+      self.P("Exception occured while archiving {} files in '{}': {}".format(
+        len(files), path_zip, e), color='r'
+      )
+      return
+    return path_zip

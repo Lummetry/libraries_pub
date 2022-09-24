@@ -36,7 +36,7 @@ from datetime import datetime as dt
 from datetime import timedelta
 from pathlib import Path
 
-__VER__ = '9.5.0'
+__VER__ = '9.6.1'
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -278,23 +278,25 @@ class BaseLogger(object):
     return self.file_prefix
   
   
-  def cleanup_logs(self, days=10):
+  def cleanup_logs(self, archive_older_than_days=2):
     self.P("Cleanup logs...", color='y')
-    str_old_date = (dt.today() - timedelta(days=days)).strftime('%Y%m%d')
+    str_old_date = (dt.today() - timedelta(days=archive_older_than_days)).strftime('%Y%m%d')
     int_old_date = int(str_old_date)
     logs = os.listdir(self._logs_dir)
     for fn in logs:
       if fn[-4:] == '.txt':
         str_date = fn[:8]
         int_date = None
-        if len(str_date) > 8:
+        if len(str_date) == 8:
           try:
             int_date = int(str_date)
           except:
             pass
         if int_date is not None and int_date <= int_old_date:
-          self.P("  Deleting old log file '{}'".format(fn), color='y')
           full_fn = os.path.join(self._logs_dir, fn)
+          zip_fn = os.path.join(self._logs_dir, "_logs_archive.zip")
+          self.add_file_to_zip(zip_fn, full_fn)
+          self.P("  Deleting old log file '{}'".format(fn), color='y')
           os.remove(full_fn)
     return
                     
@@ -1231,3 +1233,5 @@ class BaseLogger(object):
     else:
       return lst_data
       
+  def get_log_files(self):
+    return [os.path.join(self._logs_dir, x) for x in os.listdir(self._logs_dir) if '.txt' in x.lower()]
