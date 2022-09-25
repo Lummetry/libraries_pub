@@ -346,9 +346,9 @@ class _TimersMixin(object):
     if self.DEBUG:
       if len(title) > 0:
         title = ' ' + title
-      header = "Timing results{}:".format(title)
+      header = "Timing results{} at {}:".format(title, self.now_str(nice_print=True, short=True))
       if threshold_no_show > 0:
-        header += " # discarding entries with time < {}".format(threshold_no_show)
+        header += " (discarding entries with time < {})".format(threshold_no_show)
       lst_logs.append(header)
 
       ## SORTING sections and keeping the default section the first one ..
