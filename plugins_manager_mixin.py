@@ -24,10 +24,13 @@ import inspect
 import importlib
 import traceback
 
+from .code_cheker.base_code_checker import BaseCodeChecker
+
 class _PluginsManagerMixin:
 
   def __init__(self):
     super(_PluginsManagerMixin, self).__init__()
+    self.code_checker = BaseCodeChecker()
     return
 
   def _get_avail_plugins(self, locations):
@@ -52,13 +55,24 @@ class _PluginsManagerMixin:
 
     return
   
-  def _perform_safety_check(self, module):
+  def _perform_module_safety_check(self, module):
     good = True
     str_code = inspect.getsource(module)
-    self.P("Performing code safety check on {}:".format(module.__name__), color='m')
+    self.P("Performing code safety check on module {}:".format(module.__name__), color='m')
     ### TODO: finish code analysis using BaseCodeChecker
-    
-    ###
+    errors = self.code_checker.check_code_text(str_code)
+    if errors is not None:
+      self.P("WARNING: Unsafe code in {}: {}. In future this will STOP the usage of this plugin.".format(
+        module.__name__, errors), color='r'
+      )
+      # now return ... bad
+    return good
+
+  def _perform_class_safety_check(self, classdef):
+    good = True
+    str_code = inspect.getsource(classdef)
+    self.P("Performing code safety check on class {}:".format(classdef.__name__), color='m')
+    ### TODO: finish code analysis using BaseCodeChecker
     return good
 
   def _get_module_name_and_class(self, locations, name, suffix=None, verbose=1, safety_check=False):
@@ -82,7 +96,7 @@ class _PluginsManagerMixin:
     try:
       module = importlib.import_module(_module_name)
       if module is not None and safety_check:
-        if not self._perform_safety_check(module):
+        if not self._perform_module_safety_check(module):
           raise ValueError("Unsafe code detected in module '{}'".format(module.__name__))
       classes = inspect.getmembers(module, inspect.isclass)
       for _cls in classes:
@@ -94,11 +108,13 @@ class _PluginsManagerMixin:
             simple_name, [x[0] for x in classes]
           ), color='r')
       _config_dict = getattr(module, "_CONFIG", None)
+      if _cls_def is not None and safety_check:
+        if not self._perform_class_safety_check(_cls_def):
+          raise ValueError("Unsafe code detected in class '{}'".format(_cls_def.__name__))        
     except:
       str_err = traceback.format_exc()
-      if verbose >= 1:
-        self.P("Error preparing {} with module {}:\n{}".format(
-          name, _module_name, str_err
-        ), color='r')
+      self.P("Error preparing {} with module {}:\n{}".format(
+        name, _module_name, str_err
+      ), color='error')
 
     return _module_name, _class_name, _cls_def, _config_dict
