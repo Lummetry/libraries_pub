@@ -42,6 +42,8 @@ _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
 
 COLORS = {
+  'n': "\x1b[1;37m", # normal white
+  'd': "\x1b[0;37m", # grey white
   'r': "\x1b[1;31m",
   'g': "\x1b[1;32m",
   'y': "\x1b[1;33m",
@@ -49,7 +51,7 @@ COLORS = {
   'm': "\x1b[1;35m",
   'a': "\x1b[41m",
   'e': "\x1b[41m",
-  'w': "\x1b[1;31m",
+  'w': "\x1b[1;31m", # warning == red
 
   '__end__': "\x1b[0m",
 }
