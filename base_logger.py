@@ -31,6 +31,7 @@ import socket
 import threading
 
 from time import time as tm
+from time import strftime, localtime
 from collections import OrderedDict
 from datetime import datetime as dt
 from datetime import timedelta
@@ -938,6 +939,10 @@ class BaseLogger(object):
         return dt.now().strftime("%Y%m%d%H%M%S") 
       else:
         return dt.now().strftime("%Y%m%d%H%M%S%f")
+  
+  @staticmethod
+  def time_to_str(t):
+    return strftime('%Y-%m-%d %H:%fM:%S', localtime(t))
 
   @staticmethod
   def now_str_fmt(fmt=None):
