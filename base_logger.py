@@ -37,7 +37,7 @@ from datetime import datetime as dt
 from datetime import timedelta
 from pathlib import Path
 
-__VER__ = '9.6.2'
+from .version import __VER__
 
 _HTML_START = "<HEAD><meta http-equiv='refresh' content='5' ></HEAD><BODY><pre>"
 _HTML_END = "</pre></BODY>"
@@ -942,7 +942,7 @@ class BaseLogger(object):
   
   @staticmethod
   def time_to_str(t):
-    return strftime('%Y-%m-%d %H:%fM:%S', localtime(t))
+    return strftime('%Y-%m-%d %H:%M:%S', localtime(t))
 
   @staticmethod
   def now_str_fmt(fmt=None):
