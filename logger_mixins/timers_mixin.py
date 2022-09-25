@@ -287,8 +287,8 @@ class _TimersMixin(object):
     return msg
 
   def show_timers(self, **kwargs):
+    color = kwargs.pop('color', 'n')
     lst_logs = self.format_timers(**kwargs)
-    color = kwargs.get('color', 'n')
     for l in lst_logs:
       self.verbose_log(l, color=color)
     return
