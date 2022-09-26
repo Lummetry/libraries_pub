@@ -941,7 +941,9 @@ class BaseLogger(object):
         return dt.now().strftime("%Y%m%d%H%M%S%f")
   
   @staticmethod
-  def time_to_str(t):
+  def time_to_str(t=None):
+    if t is None:
+      t = tm()
     return strftime('%Y-%m-%d %H:%M:%S', localtime(t))
 
   @staticmethod
