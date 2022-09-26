@@ -380,7 +380,7 @@ class _TimersMixin(object):
         dfs(buffer_visited, self.timers_graph[section], "ROOT", True, lst_logs, section)
       if len(old_sections) > 0:
         lst_logs.append("Archived sections older than {:.1f} hrs: {}".format(
-          OBSOLETE_SECTION_TIME / 3600, old_sections
+          OBSOLETE_SECTION_TIME / 3600, len(old_sections)
         ))
     else:
       self.verbose_log("DEBUG not activated!")
