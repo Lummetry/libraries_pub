@@ -307,6 +307,8 @@ class BaseLogger(object):
       self.add_files_to_zip(zip_fn, archive_list)
       for full_fn in archive_list:
         os.remove(full_fn)
+    else:
+      self.P("  Nothing to clean.")
     return
                     
 
