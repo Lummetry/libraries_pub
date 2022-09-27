@@ -202,13 +202,21 @@ class _GeneralSerializationMixin(object):
         mode='a', 
         compression=ZIP_DEFLATED
       )
+      self.P("  Adding {} files to archive (zip) {}".format(
+        len(files),
+        path_zip, 
+        ), color='y'
+      )
+      written = 0
       for path_file in files:
         if not os.path.isfile(path_file):
-          self.P("Adding to zip '{}' failed: missing '{}' ".format(path_zip, path_file), color='r')
-          continue
-        self.P("Archiving (zip) '{}' => {}".format(path_file, path_zip), color='y')
+          self.P("    Adding to zip '{}' failed: missing '{}' ".format(path_zip, path_file), color='r')
+          continue        
         zip.write(path_file, arcname=os.path.basename(path_file))
+        print(".",  flush=True, end='')
+        written += 1
       zip.close()
+      self.P("    Added {} files.".format(written), color='y')
     except Exception as e:
       self.P("Exception occured while archiving {} files in '{}': {}".format(
         len(files), path_zip, e), color='r'

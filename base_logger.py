@@ -282,10 +282,13 @@ class BaseLogger(object):
   
   
   def cleanup_logs(self, archive_older_than_days=2):
-    self.P("Cleanup logs...", color='y')
+    self.P("Cleaning logs older than {} days...".format(archive_older_than_days), color='y')
     str_old_date = (dt.today() - timedelta(days=archive_older_than_days)).strftime('%Y%m%d')
     int_old_date = int(str_old_date)
     logs = os.listdir(self._logs_dir)
+    archive_list = []
+    show_list = []
+    zip_fn = os.path.join(self._logs_dir, "_logs_archive.zip")
     for fn in logs:
       if fn[-4:] == '.txt':
         str_date = fn[:8]
@@ -295,12 +298,15 @@ class BaseLogger(object):
             int_date = int(str_date)
           except:
             pass
-        if int_date is not None and int_date <= int_old_date:
+        if int_date is not None and int_date < int_old_date:
           full_fn = os.path.join(self._logs_dir, fn)
-          zip_fn = os.path.join(self._logs_dir, "_logs_archive.zip")
-          self.add_file_to_zip(zip_fn, full_fn)
-          self.P("  Deleting old log file '{}'".format(fn), color='y')
-          os.remove(full_fn)
+          archive_list.append(full_fn)
+          show_list.append(fn)
+    if len(archive_list) > 0:
+      self.P("  Archiving {} logs...".format(len(archive_list)), color='y')
+      self.add_files_to_zip(zip_fn, archive_list)
+      for full_fn in archive_list:
+        os.remove(full_fn)
     return
                     
 
