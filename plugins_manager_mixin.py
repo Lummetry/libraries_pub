@@ -61,11 +61,13 @@ class _PluginsManagerMixin:
     self.P("Performing code safety check on module {}:".format(module.__name__), color='m')
     ### TODO: finish code analysis using BaseCodeChecker
     errors = self.code_checker.check_code_text(str_code)
-    if errors is not None:
-      self.P("WARNING: Unsafe code in {}: {}. In future this will STOP the usage of this plugin.".format(
-        module.__name__, errors), color='r'
+    if errors is not None:      
+      self.P("  ERROR: Unsafe code in {}: {}.".format(
+        module.__name__, errors), color='error'
       )
+      self.P("   ********* In future this will STOP the usage of this plugin. **************", color='r')
       # now return ... bad
+    self.P("Finished performing code safety check on module {}:".format(module.__name__), color='m')
     return good
 
   def _perform_class_safety_check(self, classdef):
