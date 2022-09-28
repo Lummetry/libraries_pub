@@ -144,6 +144,17 @@ class BaseLogger(object):
 
     return
   
+  def get_unique_id(self, size=8):
+    """
+    efficient and low-colision function for small unique id generation
+    """
+    import string
+    import random
+    alphabet = string.ascii_lowercase + string.digits
+    uid = ''.join(random.choices(alphabet, k=size))
+    return uid
+    
+  
   def is_running(self, verbose=True):
     return self.same_script_already_running(verbose=verbose)
     
