@@ -223,3 +223,20 @@ class _GeneralSerializationMixin(object):
       )
       return
     return path_zip
+  
+  
+  def compress_bytes(self, data):
+    import zlib
+    if not isinstance(data, bytes):
+      data = bytes(str(data), 'utf-8')
+    zip_data = zlib.compress(data)
+    return zip_data
+  
+  def decompress_bytes(self, zip_data):
+    if not isinstance(zip_data, bytes):
+      raise ValueError('`decompress_bytes` input must be bytes type')
+    import zlib
+    data = zlib.decompress(zip_data)
+    return data
+    
+    
