@@ -150,10 +150,11 @@ class FlaskWorker(LummetryObject, _ConfigHandlerMixin):
       prep_inputs = self._pre_process(inputs)
     except:
       err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
+      msg = 'Exception in _pre_process:\n{}'.format(err_dict)
       self.__encountered_error = err_dict['ERR_MSG']
       self._create_notification(
         notif='exception',
-        msg='Exception in _pre_process:\n{}'.format(err_dict)
+        msg=msg,
       )
       return
 
@@ -168,9 +169,10 @@ class FlaskWorker(LummetryObject, _ConfigHandlerMixin):
     except:
       err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
       self.__encountered_error = err_dict['ERR_MSG']
+      msg = 'Exception in _predict:\n{}'.format(err_dict)
       self._create_notification(
         notif='exception',
-        msg='Exception in _predict:\n{}'.format(err_dict)
+        msg=msg
       )
       return
 
@@ -185,9 +187,10 @@ class FlaskWorker(LummetryObject, _ConfigHandlerMixin):
     except:
       err_dict = self.__err_dict(*self.log.get_error_info(return_err_val=True))
       self.__encountered_error = err_dict['ERR_MSG']
+      msg = 'Exception in _post_process\n{}'.format(err_dict)
       self._create_notification(
         notif='exception',
-        msg='Exception in _post_process\n{}'.format(err_dict)
+        msg=msg,
       )
       return
 
@@ -220,7 +223,10 @@ class FlaskWorker(LummetryObject, _ConfigHandlerMixin):
     answer = self.__post_process(pred)
 
     if self.__encountered_error:
-      answer = {'ERROR' : self.__encountered_error}
+      answer = {'{}_ERROR'.format(self.__class__.__name__) : self.__encountered_error}
+      self.P("Worker {}:{} execute error: {}".format(
+        self.__clas__.__name__, self._worker_id, self.__encountered_error), color='r'
+      )
 
     return answer
 

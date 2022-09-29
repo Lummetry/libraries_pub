@@ -165,8 +165,8 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     return
 
   def _log_banner(self):
-    _logo = "FlaskModelServer v{} started on '{}:{}'".format(
-      self.__version__, self._host, self._port
+    _logo = "FlaskModelServer v{} '{}' started on '{}:{}'".format(
+      self.__version__, self.__worker_name, self._host, self._port
     )
 
     lead = 5
@@ -270,24 +270,32 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     self._counter += 1
     counter = self._counter
     self._lock_counter.release()
-    request = flask.request
-    method = request.method
-
-    params = get_api_request_body(request=request)
-    client = params.get('client', 'unk')
-
-    self._create_notification(
-      notif='log',
-      msg=(counter, "Received '{}' request {} from client '{}' params: {}".format(
-        method, counter, client, params
-      ))
-    )
+    
+    try:
+      request = flask.request
+      method = request.method
+      
+      params = get_api_request_body(request=request)
+      client = params.get('client', 'unk')
+  
+      self._create_notification(
+        notif='log',
+        msg=(counter, "Received '{}' request {} from client '{}' params: {}".format(
+          method, counter, client, params
+        ))
+      )
+      failed_request = False
+      err_msg = ''
+    except Exception as exc:
+      failed_request = True
+      err_msg = str(self.log.get_error_info()) # maybe use
+      self.P("Request processing generated exception: {}".format(err_msg), color='r')
 
     worker, wid = None, -1
-    if method != 'OPTIONS':
+    if method != 'OPTIONS' and not failed_request:
       worker, answer, wid = self._wait_predict(data=params, counter=counter)
     else:
-      answer = {}
+      answer = {'request_error' : err_msg}
 
     if answer is None:
       jresponse = flask.jsonify({
@@ -299,7 +307,7 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
     else:
       if isinstance(answer, dict):
         answer['call_id'] = counter
-        if worker:
+        if worker is not None:
           answer['signature'] = '{}:{}'.format(worker.__class__.__name__, wid)
         jresponse = flask.jsonify(answer)
       else:
