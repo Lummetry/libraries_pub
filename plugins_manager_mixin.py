@@ -112,7 +112,9 @@ class _PluginsManagerMixin:
       _config_dict = getattr(module, "_CONFIG", None)
       if _cls_def is not None and safety_check:
         if not self._perform_class_safety_check(_cls_def):
-          raise ValueError("Unsafe code detected in class '{}'".format(_cls_def.__name__))        
+          raise ValueError("Unsafe code detected in class '{}'".format(_cls_def.__name__))     
+      _found_location = ".".join(_module_name.split('.')[:-1])
+      self.P("  Plugin '{}' loaded and checked from {}".format(name, _found_location), color='g')
     except:
       str_err = traceback.format_exc()
       self.P("Error preparing {} with module {}:\n{}".format(
