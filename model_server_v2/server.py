@@ -32,7 +32,7 @@ from libraries.logger_mixins.serialization_json_mixin import NPJson
 
 from libraries.model_server_v2.request_utils import get_api_request_body
 
-__VER__ = '0.1.2.1'
+__VER__ = '0.1.2.2'
 
 class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
@@ -278,7 +278,7 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
       params = get_api_request_body(request=request)
       client = params.get('client', 'unk')
   
-      self._create_notification(
+      self._create_notification( # TODO: do we really need this notification? get_qa is crazy...
         notif='log',
         msg=(counter, "Received '{}' request {} from client '{}' params: {}".format(
           method, counter, client, params
