@@ -127,8 +127,10 @@ class _ConfigHandlerMixin(object):
   def _cfg_check_type(self, cfg_key, types):
     val = self.config_data.get(cfg_key)
     if not isinstance(val, types):
-      msg = "'{}' config key '{}={}' requires type {} ".format(
-        self.__class__.__name__, cfg_key, val, types,
+      msg = "`{}` config key '{}={}' requires type `{}` - found `{}`".format(
+        self.__class__.__name__, 
+        cfg_key, val, [x.__name__ for x in types] if isinstance(types, tuple) else types.__name__,
+        type(val).__name__
       )
       return False, msg
     return True, ''
@@ -140,13 +142,13 @@ class _ConfigHandlerMixin(object):
     _max = dct_rules.get(CONST.MAX_VAL)
     val = self.config_data.get(cfg_key)
     if _min is not None and val < _min:
-      msg = "'{}' config key '{}={}' of type {} requires value > {}".format(
+      msg = "`{}` config key '{}={}' of type `{}` requires value > {}".format(
         self.__class__.__name__, cfg_key, val, dct_rules.get(CONST.TYPE), _min,
       )
       return False, msg
     
     if _max is not None and val > _max:
-      msg = "'{}' config key '{}={}' of type {} requires value < {}".format(
+      msg = "`{}` config key '{}={}' of type `{}` requires value < {}".format(
         self.__class__.__name__, cfg_key, val, dct_rules.get(CONST.TYPE),  _max,
       )
       return False, msg
@@ -156,7 +158,7 @@ class _ConfigHandlerMixin(object):
     _excl_lst = dct_rules.get(CONST.EXCLUDED_LIST)
     val = self.config_data.get(cfg_key)
     if _excl_lst is not None and val in _excl_lst:
-      msg = "'{}' config key '{}={}' found in exclutions {}".format(
+      msg = "`{}`  key '{}={}' in exclutions {}".format(
         self.__class__.__name__, cfg_key, val, _excl_lst,
       )
       return False, msg
@@ -181,12 +183,12 @@ class _ConfigHandlerMixin(object):
   def _cfg_validate_str(self, cfg_key, dct_rules):
     res1, msg1 = self._cfg_check_type(cfg_key=cfg_key, types=(str,))
     res2, msg2 = self._cfg_check_exclusions(cfg_key=cfg_key, dct_rules=dct_rules)
-
+    res3 = True
     msg3 = None
     val = self.config_data.get(cfg_key)
     _min_len = dct_rules.get(CONST.MIN_LEN, 0)
     if _min_len is not None and len(val) < _min_len:
-      msg3 = "'{}' config key '{}={}' of type {} must have at least {} chars".format(
+      msg3 = "`{}` config key '{}={}' of type `{}` must have at least {} chars".format(
         self.__class__.__name__, cfg_key, val, dct_rules.get(CONST.TYPE), _min_len,
       )
       res3 = False
@@ -223,14 +225,14 @@ class _ConfigHandlerMixin(object):
             self.P("  No TYPE information found for '{}'".format(k), color='r')       
           if False:
             self.P("  Processing key '{}' of type '{}'".format(k, _type.__name__))#DELETE
-          if _type in [int, float, str, dict, list]:
+          if _type in [int, float, str]:
             # create validation function out of this mixin available funcs
             str_func = CONST.FUNC + _type.__name__
             func = getattr(self, str_func, None)
             res = True # assume good
             if func is None:
               # if we use a predefined type then we must have the validation
-              self.P("  No handler for '{}' config key validation".format(_type.__name__), color='r')
+              self.P("  No default handler for type '{}' config key validation".format(_type.__name__), color='r')
               # maybe we can put res = False here?
             else:
               msg = ''
@@ -248,13 +250,16 @@ class _ConfigHandlerMixin(object):
               result = False
               # here we can break for but we leave to see what other error we have 
           else:
-            self.P("  Unavailable handler for type '{}' for '{}'".format(_type, k), color='r')
+            self.P("  Unavailable handler for type '{}' for config key '{}'".format(
+              _type.__name__, k), 
+              color='m' if _type is None else 'y'
+            )
             if _type is not None:
               # but we can still run the 
               res, msg = self._cfg_check_type(cfg_key=k, types=_type)
               if not res:
-                self.P("  Automatic checking of unhandled type '{}' for '{}' failed on data: {}".format(
-                  _type, k, self.config_data.get(k)),
+                self.P("  Automatic checking of unhandled type `{}`: {}".format(
+                  _type.__name__, msg),
                   color='r'
                 )
         else:
