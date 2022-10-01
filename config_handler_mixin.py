@@ -205,32 +205,42 @@ class _ConfigHandlerMixin(object):
         len(self.config_data.get(CONST.RULES)) > 0):
       dct_validation = self.config_data.get(CONST.RULES)
       for k in dct_validation:
+        # run each config key present in validation area
         if k not in self.config_data:
-          self.P("  Key '{}' not found in config_data", color='r')
+          self.P("  Key '{}' found in validation is not present in config_data", color='r')
           continue
         dct_rules = dct_validation.get(k, {})
         if len(dct_rules) > 0:
+          # now we get the actual type of the value 
           str_type= dct_rules.get(CONST.TYPE)
           if isinstance(str_type, str) and len(str_type) > 1:
-            _type = eval(str_type)
+            try:
+              _type = eval(str_type)
+            except:
+              self.P("  TYPE '{}' pre-validation failed!".format(str_type))
+              _type = None
           else:
             self.P("  No TYPE information found for '{}'".format(k), color='r')       
           if False:
             self.P("  Processing key '{}' of type '{}'".format(k, _type.__name__))#DELETE
           if _type in [int, float, str, dict, list]:
+            # create validation function out of this mixin available funcs
             str_func = CONST.FUNC + _type.__name__
             func = getattr(self, str_func, None)
-            res = True
+            res = True # assume good
             if func is None:
               # if we use a predefined type then we must have the validation
               self.P("  No handler for '{}' config key validation".format(_type.__name__), color='r')
               # maybe we can put res = False here?
             else:
               msg = ''
+              # now we run the validation function
               res = func(k, dct_rules)
               if isinstance(res, tuple):
                 res, msg = res
+            # end run-or-fail validation
             if not res:
+              # validation failed
               self.P("  Config validation for '{}={}' of '{}' failed: {}".format(
                 k, self.config_data.get(k), self.__class__.__name__, msg),
                 color='r'
@@ -238,7 +248,15 @@ class _ConfigHandlerMixin(object):
               result = False
               # here we can break for but we leave to see what other error we have 
           else:
-            self.P("  Unknown type '{}' for '{}'".format(_type, k), color='r')       
+            self.P("  Unavailable handler for type '{}' for '{}'".format(_type, k), color='r')
+            if _type is not None:
+              # but we can still run the 
+              res, msg = self._cfg_check_type(cfg_key=k, types=_type)
+              if not res:
+                self.P("  Automatic checking of unhandled type '{}' for '{}' failed on data: {}".format(
+                  _type, k, self.config_data.get(k)),
+                  color='r'
+                )
         else:
           self.P("  Empty rules info for '{}'".format(k))
         # end if rules parsing
