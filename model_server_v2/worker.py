@@ -225,7 +225,7 @@ class FlaskWorker(LummetryObject, _ConfigHandlerMixin):
     if self.__encountered_error:
       answer = {'{}_ERROR'.format(self.__class__.__name__) : self.__encountered_error}
       self.P("Worker {}:{} execute error: {}".format(
-        self.__clas__.__name__, self._worker_id, self.__encountered_error), color='r'
+        self.__class__.__name__, self._worker_id, self.__encountered_error), color='r'
       )
 
     return answer
