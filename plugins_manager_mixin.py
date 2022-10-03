@@ -143,8 +143,8 @@ class _PluginsManagerMixin:
       self.P("  Plugin '{}' loaded and checked from {}".format(name, _found_location), color='g')
     except:
       str_err = traceback.format_exc()
-      self.P("Error preparing {} with module {}:\n{}".format(
-        name, _module_name, str_err
-      ), color='error')
+      msg = "Error preparing {} with module {}:\n{}".format(
+        name, _module_name, str_err)
+      self.P(msg, color='error')
 
     return _module_name, _class_name, _cls_def, _config_dict
