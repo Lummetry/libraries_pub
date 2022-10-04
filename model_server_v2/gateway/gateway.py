@@ -296,7 +296,7 @@ class FlaskGateway(LummetryObject):
 
   def _view_func_worker(self, path):
     request = flask.request
-    params = get_api_request_body(request)
+    params = get_api_request_body(request, self.log)
     signature = params.pop('SIGNATURE', None)
     if signature is None:
       return flask.jsonify({'ERROR' : "Bad input. 'SIGNATURE' not found"})
@@ -315,7 +315,7 @@ class FlaskGateway(LummetryObject):
 
   def _view_func_start_server(self):
     request = flask.request
-    params = get_api_request_body(request)
+    params = get_api_request_body(request, self.log)
     signature = params.get('SIGNATURE', None)
 
     if signature is None:
@@ -335,7 +335,7 @@ class FlaskGateway(LummetryObject):
 
   def _view_func_kill_server(self):
     request = flask.request
-    params = get_api_request_body(request)
+    params = get_api_request_body(request, self.log)
     signature = params.get('SIGNATURE', None)
 
     if signature is None:

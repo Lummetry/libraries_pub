@@ -275,7 +275,7 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
       request = flask.request
       method = request.method
       
-      params = get_api_request_body(request=request)
+      params = get_api_request_body(request=request, log=self.log)
       client = params.get('client', 'unk')
   
       self._create_notification( # TODO: do we really need this notification? get_qa is crazy...
@@ -361,7 +361,7 @@ class FlaskModelServer(LummetryObject, _PluginsManagerMixin):
 
   def _view_func_workers_endpoint(self):
     request = flask.request
-    params = get_api_request_body(request=request)
+    params = get_api_request_body(request=request, log=self.log)
 
     nr_workers = params.get('NR_WORKERS', None)
     if nr_workers is None:
