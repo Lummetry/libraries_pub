@@ -23,7 +23,7 @@ import traceback
 from libraries import Logger
 import os
 
-def get_api_request_body(request, log : Logger):
+def get_api_request_body(request, log : Logger, sender=None):
   try:
     method = request.method
     args_data = request.args
@@ -39,16 +39,19 @@ def get_api_request_body(request, log : Logger):
       if len(base_params) == 0:
         # params in json?
         base_params = json_data
-    # endif
+    #endif
 
     if base_params is not None:
       params = dict(base_params)
     else:
       params = {}
-    # endif
+    #endif
   except Exception as e:
-    s = '{}\n\n\n\n{}'.format(traceback.format_exc(), str(request.data))
-    with open(os.path.join(log.get_output_folder(), 'error_{}.txt'.format(log.now_str())), 'wt') as fh:
+    s = 'sender={}\n\ntraceback={}\n\n\n\nrequest.data={}'.format(sender, traceback.format_exc(), str(request.data))
+    fn = 'error_{}'.format(log.now_str())
+    if sender is not None:
+      fn += '_{}'.format(sender)
+    with open(os.path.join(log.get_output_folder(), '{}.txt'.format(fn)), 'wt') as fh:
       fh.write(s)
 
   return params

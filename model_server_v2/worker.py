@@ -20,6 +20,7 @@ Copyright 2019-2022 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 """
 
 import abc
+import base64
 
 from libraries import Logger
 from libraries import LummetryObject
@@ -215,6 +216,10 @@ class FlaskWorker(LummetryObject, _ConfigHandlerMixin):
     """
     self._counter = counter
     self.__encountered_error = None
+
+    base64_keys = inputs.pop('BASE64_KEYS', [])
+    for k in base64_keys:
+      inputs[k] = base64.b64decode(inputs[k]).decode('ISO-8859-1')
 
     prep_inputs = self.__pre_process(inputs)
 
