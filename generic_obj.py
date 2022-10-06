@@ -25,8 +25,6 @@ from libraries import Logger
 from collections import deque
 import traceback
 
-
-
 class LummetryObject(object):
   """
   Generic class
