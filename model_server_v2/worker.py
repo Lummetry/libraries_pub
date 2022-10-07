@@ -21,6 +21,7 @@ Copyright 2019-2022 Lummetry.AI (Knowledge Investment Group SRL). All Rights Res
 
 import abc
 import base64
+import json
 
 from libraries import Logger
 from libraries import LummetryObject
@@ -218,14 +219,29 @@ class FlaskWorker(LummetryObject, _ConfigHandlerMixin):
     self.__encountered_error = None
 
     base64_keys = inputs.pop('BASE64_KEYS', [])
+    base64_outputs = inputs.pop('BASE64_OUTPUTS', [])
     for k in base64_keys:
-      inputs[k] = base64.b64decode(inputs[k]).decode('ISO-8859-1')
+      if k in inputs:
+        inputs[k] = base64.b64decode(inputs[k]).decode('ISO-8859-1')
+      else:
+        self.P("Key {} sent in 'BASE64_KEYS' does not exist in input", color='e')
+    #endfor
 
     prep_inputs = self.__pre_process(inputs)
 
     pred = self.__predict(prep_inputs)
 
     answer = self.__post_process(pred)
+
+    for k in base64_outputs:
+      if k in answer:
+        if isinstance(answer[k], str):
+          answer[k] = base64.b64encode(answer[k].encode())
+        else:
+          answer[k] = base64.b64encode(json.dumps(answer[k]).encode())
+      else:
+        self.P("Key {} sent in 'BASE64_OUTPUTS' does not exist in answer", color='e')
+    #endfor
 
     if self.__encountered_error:
       answer = {'{}_ERROR'.format(self.__class__.__name__) : self.__encountered_error}
