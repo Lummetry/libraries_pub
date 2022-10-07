@@ -236,9 +236,9 @@ class FlaskWorker(LummetryObject, _ConfigHandlerMixin):
     for k in base64_outputs:
       if k in answer:
         if isinstance(answer[k], str):
-          answer[k] = base64.b64encode(answer[k].encode())
+          answer[k] = base64.b64encode(answer[k].encode()).decode()
         else:
-          answer[k] = base64.b64encode(json.dumps(answer[k]).encode())
+          answer[k] = base64.b64encode(json.dumps(answer[k]).encode()).decode()
       else:
         self.P("Key {} sent in 'BASE64_OUTPUTS' does not exist in answer", color='e')
     #endfor
