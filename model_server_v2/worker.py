@@ -222,7 +222,7 @@ class FlaskWorker(LummetryObject, _ConfigHandlerMixin):
     base64_outputs = inputs.pop('BASE64_OUTPUTS', [])
     for k in base64_keys:
       if k in inputs:
-        inputs[k] = base64.b64decode(inputs[k]).decode('ISO-8859-1')
+        inputs[k] = base64.b64decode(inputs[k]).decode('ansi')
       else:
         self.P("Key {} sent in 'BASE64_KEYS' does not exist in input", color='e')
     #endfor
