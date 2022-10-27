@@ -220,9 +220,10 @@ class FlaskWorker(LummetryObject, _ConfigHandlerMixin):
 
     base64_keys = inputs.pop('BASE64_KEYS', [])
     base64_outputs = inputs.pop('BASE64_OUTPUTS', [])
+    encoding = inputs.pop('ENCODING', 'ansi')
     for k in base64_keys:
       if k in inputs:
-        inputs[k] = base64.b64decode(inputs[k]).decode('ansi')
+        inputs[k] = base64.b64decode(inputs[k]).decode(encoding)
       else:
         self.P("Key {} sent in 'BASE64_KEYS' does not exist in input", color='e')
     #endfor
@@ -236,9 +237,9 @@ class FlaskWorker(LummetryObject, _ConfigHandlerMixin):
     for k in base64_outputs:
       if k in answer:
         if isinstance(answer[k], str):
-          answer[k] = base64.b64encode(answer[k].encode()).decode()
+          answer[k] = base64.b64encode(answer[k].encode(encoding)).decode()
         else:
-          answer[k] = base64.b64encode(json.dumps(answer[k]).encode()).decode()
+          answer[k] = base64.b64encode(json.dumps(answer[k]).encode(encoding)).decode()
       else:
         self.P("Key {} sent in 'BASE64_OUTPUTS' does not exist in answer", color='e')
     #endfor
